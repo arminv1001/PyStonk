@@ -1,3 +1,4 @@
+import pandas as pd
 class Broker:
     ## Abstrakte Klasse
     def __init__(self,BrokerName,ApiUrl):
@@ -19,5 +20,5 @@ class Broker:
     def closeOrder(self,id):
         return "Need to be implemented"
 
-    def getHistoricalData(self,start_date,end_date):
+    def getHistoricalData(self,symbol,start_date,end_date) -> pd.DataFrame:
         return "Need to be implemented"
