@@ -32,6 +32,7 @@ class TadingSystem:
         TelegramBot.sendMessage(self.__system_name + " closed Trade")
 
     def createSignal(self,lookback_period) -> pd.DataFrame:
+        #Trading system
         pass
 
     def checkSignal(self):
@@ -48,7 +49,7 @@ class TadingSystem:
         elif self.__system_style == 3:
             signal_df = signal_df[signal_df["Short"] == 1 | signal_df["Long"] == 1]
             last_signal = signal_df.iloc[-1]
-            
+
         if last_signal["Long"] == 1:
             last_signal = signal_df["Long"].iloc[-1]
         elif last_signal["Short"] == 1:
