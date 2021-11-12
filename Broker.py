@@ -7,10 +7,10 @@ class Broker:
     def getBrokerName(self):
         return self.__broker_name
     
-    def sendOrder(self,price,stoploss,takeprofit):
+    def sendOrder(self,price,stoploss=None,takeprofit=None):
         return "Need to be implemented"
     
-    def sendTrade(self):
+    def sendTrade(self,price=None,stoploss=None,takeprofit=None):
         return "Need to be implemented"
     
     def closeTrade(self,id):
