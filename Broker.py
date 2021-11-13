@@ -20,5 +20,12 @@ class Broker:
     def closeOrder(self,id):
         return "Need to be implemented"
 
-    def getHistoricalData(self,symbol,start_date,end_date) -> pd.DataFrame:
+    def getHistoricalData(self,symbol) -> pd.DataFrame:
+        # if start and end date is none than get max data
         return "Need to be implemented"
+        
+    def getHistoricalData(self,symbol,start_date,end_date) -> pd.DataFrame:
+        # if start and end date is none than get max data
+        return "Need to be implemented"
+        
+    

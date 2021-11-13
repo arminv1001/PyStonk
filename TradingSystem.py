@@ -7,7 +7,7 @@ class TadingSystem:
         self.__system_type = None #TradingSystem or Indicator
         self.__system_style = None #long only = 1;short only = 2; long and short = 3
         self.__system_name = None
-        self.__broker = Broker(None,None)
+        self.__broker = None
         self.__datenhanlder = None
         self.__loockback_candels = None
         self.__last_signal = None
@@ -36,6 +36,7 @@ class TadingSystem:
         pass
 
     def checkSignal(self):
+        self.__datenhanlder.updateData()
         if self.__loockback_candels == None:
             print("You need to define loockback_candels")
             return None
