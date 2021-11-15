@@ -1,6 +1,7 @@
 from Broker import Broker
 from TelegramBot import TelegramBot
 import pandas as pd
+import Database.db_functions as db
 class TadingSystem:
     #Abstrakte Klasse
     def __init__(self) -> None:
@@ -11,36 +12,54 @@ class TadingSystem:
         self.__datenhanlder = None
         self.__loockback_candels = None
         self.__last_signal = None
+        self.__order_list = []
 
     def getSystemType(self):
         return self.__system_type
 
     def placeOrder(self,price, stoploss=None, takeprofit=None):
-        self.__broker.sendOrder(price=price)
+        order_id = self.__broker.sendOrder(price=price)
+        db.saveOrderID(order_id,self.__system_name)
+        self.__order_list.append(order_id)
         TelegramBot.sendMessage(self.__system_name + " placed Order")
     
     def placeTrade(self,price=None, stoploss=None, takeprofit=None):
-        self.__broker.sendTrade(price=price)
+        order_id = self.__broker.sendTrade(price=price)
+        db.saveOrderID(order_id,self.__system_name)
+        self.__order_list.append(order_id)
         TelegramBot.sendMessage(self.__system_name + " placed Trade")
     
     def closeOrder(self,id):
-        self.__broker.closeOrder(id)
-        TelegramBot.sendMessage(self.__system_name + " closed Order")
-    
+        if self.__broker.closeOrder(id):
+            db.deleteOrderID(id)
+            TelegramBot.sendMessage(self.__system_name + " closed Order")
+        else:
+            TelegramBot.sendMessage(self.__system_name + " failed Trade")
+
     def closeTrade(self,id):
-        self.__broker.closeTrade(id)
-        TelegramBot.sendMessage(self.__system_name + " closed Trade")
+        if self.__broker.closeTrade(id):
+            db.deleteOrderID(id)
+            TelegramBot.sendMessage(self.__system_name + " closed Trade")
+        else:
+            TelegramBot.sendMessage(self.__system_name + " failed Trade")
 
     def createSignal(self,lookback_period) -> pd.DataFrame:
         #Trading system
         pass
 
+    def tradingHandler(self):
+        # Implement
+        pass
+
     def checkSignal(self):
         self.__datenhanlder.updateData()
+        
         if self.__loockback_candels == None:
             print("You need to define loockback_candels")
             return None
+
         signal_df = self.createSignal(self.__loockback_candels)
+
         if self.__system_style == 1:
             signal_df = signal_df[signal_df["Long"] == 1]
             last_signal = signal_df["Long"].iloc[-1]
@@ -57,8 +76,7 @@ class TadingSystem:
             last_signal = signal_df["Short"].iloc[-1]
         
         if last_signal > self.__last_signal:
-            self.placeTrade()
-            #TODO send to DB
+            self.tradingHandler()
         
 
 
