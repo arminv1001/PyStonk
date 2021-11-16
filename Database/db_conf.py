@@ -39,7 +39,7 @@ def execusionFirst(conn):
     conn.commit()
 
 def main():
-    database = "position.db"
+    database = "Database/position.db"
 
     currentOpenPositions = """ CREATE TABLE IF NOT EXISTS OpenPositions (
                                         orderID integer PRIMARY KEY,

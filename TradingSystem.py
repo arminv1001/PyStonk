@@ -2,7 +2,11 @@ from Broker import Broker
 from TelegramBot import TelegramBot
 import pandas as pd
 import Database.db_functions as db
-class TadingSystem:
+from LiveTradingSystem import LiveTradingSytem
+import datetime
+import time
+import sched
+class TradingSystem:
     #Abstrakte Klasse
     def __init__(self) -> None:
         self.__system_type = None #TradingSystem or Indicator
@@ -51,6 +55,8 @@ class TadingSystem:
         # Implement
         pass
 
+   
+    
     def checkSignal(self):
         self.__datenhanlder.updateData()
         
@@ -77,6 +83,9 @@ class TadingSystem:
         
         if last_signal > self.__last_signal:
             self.tradingHandler()
+        LiveTradingSytem.startScheduler(self.__datenhanlder.__time_scale,)
+        
+
         
 
 
