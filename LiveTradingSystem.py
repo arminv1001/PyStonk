@@ -2,7 +2,7 @@ from _typeshed import Self
 import sched
 import time
 import datetime
-from TradingSystem import TradingSystem
+from TradingSystems.TradingSystem import TradingSystem
 from typing import List
 class LiveTradingSytem:
     def __init__(self,TradingSystems:List[TradingSystem]):
@@ -27,7 +27,6 @@ class LiveTradingSytem:
             LiveTradingSytem.scheduler.enter(((((tradingSystem.getTimeFrame()-(now.minute % tradingSystem.getTimeFrame()))-1) * 60) + (60-now.second)), 1, tradingSystem.checkSignal, ())
         
     def main(self):
-        
         for trading_system in self.__trading_systems:
             LiveTradingSytem.startScheduler(trading_system,trading_system.getWeekendTrading())
         LiveTradingSytem.scheduler.run()
