@@ -1,4 +1,3 @@
-from numpy import e
 import pandas as pd
 from Broker import Broker
 from datetime import datetime

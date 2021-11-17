@@ -3,9 +3,7 @@ from TelegramBot import TelegramBot
 import pandas as pd
 import Database.db_functions as db
 from LiveTradingSystem import LiveTradingSytem
-import datetime
-import time
-import sched
+
 class TradingSystem:
     #Abstrakte Klasse
     def __init__(self) -> None:
@@ -13,13 +11,22 @@ class TradingSystem:
         self.__system_style = None #long only = 1;short only = 2; long and short = 3
         self.__system_name = None
         self.__broker = None
+        self.__time_frame = None
+        self.__weekend_trading = False
         self.__datenhanlder = None
         self.__loockback_candels = None
         self.__last_signal = None
         self.__order_list = []
+        
 
     def getSystemType(self):
         return self.__system_type
+
+    def getTimeFrame(self):
+        return self.__time_frame
+    
+    def getWeekendTrading(self):
+        return self.__weekend_trading
 
     def placeOrder(self,price, stoploss=None, takeprofit=None):
         order_id = self.__broker.sendOrder(price=price)
@@ -83,7 +90,8 @@ class TradingSystem:
         
         if last_signal > self.__last_signal:
             self.tradingHandler()
-        LiveTradingSytem.startScheduler(self.__datenhanlder.__time_scale,)
+        LiveTradingSytem.startScheduler(self)    
+       
         
 
         
