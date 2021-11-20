@@ -13,12 +13,11 @@ class TradingSystem:
         self.__broker = None
         self.__time_frame = None
         self.__weekend_trading = False
-        self.__datenhanlder = None
+        self.__datenhandler = None #tippfehler
         self.__loockback_candels = None
         self.__last_signal = None
         self.__order_list = []
         
-
     def getSystemType(self):
         return self.__system_type
 
@@ -65,7 +64,7 @@ class TradingSystem:
    
     
     def checkSignal(self):
-        self.__datenhanlder.updateData()
+        self.__datenhandler.updateData()
         
         if self.__loockback_candels == None:
             print("You need to define loockback_candels")
