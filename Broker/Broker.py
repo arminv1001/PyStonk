@@ -31,5 +31,7 @@ class Broker:
     def getHistoricalData(self,symbol,start_date,end_date) -> pd.DataFrame:
         # if start and end date is none than get max data
         return "Need to be implemented"
-        
     
+    def readLoginData(self):
+        # Need to be implemented
+        pass
