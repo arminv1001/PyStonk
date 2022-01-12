@@ -79,19 +79,6 @@ def calculate_sortino_ratio(returns, timeframe="Daily"):
     periods = PERIODS[timeframe]
     return np.sqrt(periods) * (np.mean(returns)) / np.std(returns[returns < 0])
 
-def calculate_equity(returns):
-    """
-    Calculates the equity (cumulative profit-loss curve)
-
-    Args:
-        returns (pd Series): return of strategy
-
-    Returns:
-        pd Series: equity
-    """
-
-    return returns.cumsum()
-
 def calculate_drawdowns(equity):
     """
     Calculates drawdowns of the equity curve & drawdown duration.
@@ -120,5 +107,18 @@ def calculate_drawdowns(equity):
     return performance["Drawdown"], np.max(performance["Drawdown"]), duration
 
 
+def create_trades(df)
+    # To-Do: bekommt df Row des Signals
+    """ Note: 
+        -current capitol?
+    """
+    trades = []
+    symbol = df.columns[0]
+    for row in df[df['Position'] != 0]:
+        date = position.index
+        size = 1 # row['size']
+        trade = Trade(symbol, date, size, current_capital, price, isOpen)
+        trades.append()
+        
     
 
