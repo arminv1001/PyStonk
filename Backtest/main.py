@@ -1,6 +1,7 @@
 from data_prep.CSVDataPreparer import *
 from RSI import *
-from masterdataframe.masterdataframe import *
+from equity.Equity import *
+from statistics.performance_measurements import *
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
@@ -34,22 +35,19 @@ if __name__ == "__main__":
 
     #print(closes)
 
-    master_df = MasterDataFrame(symbol, closes, start_capital, comission)
-    master_df.create()
-    a = master_df.get_dataframe()
-    print(a)
+    input_df = closes[[symbol, 'Position']]
 
-    plt.plot(closes.index, closes['Equity in Pct'])
+    equity = Equity(symbol, closes, start_capital, comission)
+    equity.create()
+    eq = equity.get_dataframe()
+
+    print(closes)
+
+    plt.plot(closes.index, closes['Equity %'])
 
     #plt.scatter(closes.index, closes['Short_Signal'], color= "#CE5757", marker="v")
     #plt.scatter(closes.index, closes['Long_Signal'], color= "#57CE95", marker="^")
     plt.show()
-
-    
-
-
-    
-    # to-do equity testen dann drawdown implementieren
     
     
     

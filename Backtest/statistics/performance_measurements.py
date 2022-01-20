@@ -1,3 +1,4 @@
+from itertools import groupby
 import numpy as np
 import pandas as pd
 
@@ -79,7 +80,7 @@ def calculate_sortino_ratio(returns, timeframe="Daily"):
     periods = PERIODS[timeframe]
     return np.sqrt(periods) * (np.mean(returns)) / np.std(returns[returns < 0])
 
-def calculate_drawdowns(equity):
+def calculate_drawdowns(equity, type):
     """
     Calculates drawdowns of the equity curve & drawdown duration.
 
@@ -90,35 +91,36 @@ def calculate_drawdowns(equity):
         pd DataFrame: drawdown, 
     """
     hwm = np.zeros(len(equity.index)) # high water marks (global maximum)
+    
     # Get high water marks
     for t in range(1, len(equity.index)):
-        hwm[t] = max(hwm[t-1], returns.iloc[t])
+        hwm[t] = max(hwm[t-1], equity.iloc[t])
+    
+    hwm_tmp = list(set(hwm))
+    
+    hwm_dates = [equity[equity == mark].index[0] for mark in hwm_tmp]
+    hwm_dates.sort()
+    dd_durations = []
+
+    for i in range(len(hwm_dates)):
+        
+        if i < len(hwm_dates)-1:
+            dd_durations.append(hwm_dates[i+1]-hwm_dates[i])
+    
+    dd_max_duration = max(dd_durations)
+    
+    
+    # Get dates of whm
     
     # Calculate drawdown, max. drawdown, max. drawdown duration
-    performance = pd.DataFrame(index=returns.idx)
-    performance["Drawdown"] = (hwm - returns) / hwm
+    performance = pd.DataFrame(index=equity.index)
+    performance["Drawdown"] = (hwm - equity) / hwm
     performance["Drawdown"].iloc[0] = 0.0
-    performance["DrawdownDuration"] = np.where(
-        performance["Drawdown"] == 0, 0, 1)
-    duration = max(
-        sum(1 for i in g if i == 1)
-        for k, g in groupby(performance["DurationCheck"])
-    )
-    return performance["Drawdown"], np.max(performance["Drawdown"]), duration
 
 
-def create_trades(df)
-    # To-Do: bekommt df Row des Signals
-    """ Note: 
-        -current capitol?
-    """
-    trades = []
-    symbol = df.columns[0]
-    for row in df[df['Position'] != 0]:
-        date = position.index
-        size = 1 # row['size']
-        trade = Trade(symbol, date, size, current_capital, price, isOpen)
-        trades.append()
+    return performance["Drawdown"], np.max(performance["Drawdown"]), # duration
+
+
         
     
 
