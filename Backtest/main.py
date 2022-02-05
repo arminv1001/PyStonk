@@ -5,6 +5,7 @@ from statistics.performance_measurements import *
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
+import numpy as np
 
 
 if __name__ == "__main__":
@@ -41,13 +42,30 @@ if __name__ == "__main__":
     equity.create()
     eq = equity.get_dataframe()
 
-    print(closes)
 
-    plt.plot(closes.index, closes['Equity %'])
+
+    a = np.array([3])
+    closes[]
+    
+    bing = closes[closes['Position'] == -1].index
+    bong = closes.loc[bing, 'Return']
+    print(bing.get_loc('2015-12-18 00:00:00+00:00'))
+    #print(bing)
+
+    #print(do)
+
+
+
+
+    #held = bing - bong
+    #print(held)
+
+
+    #plt.plot(closes.index, closes['Equity %'])
 
     #plt.scatter(closes.index, closes['Short_Signal'], color= "#CE5757", marker="v")
     #plt.scatter(closes.index, closes['Long_Signal'], color= "#57CE95", marker="^")
-    plt.show()
+    #plt.show()
     
     
     
