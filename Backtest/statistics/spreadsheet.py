@@ -9,103 +9,202 @@ PERIODS = {
 
 class SpreadSheet(object):
 
-    def __init__(self, df):
-        self.master_df = df
-        self.benchmark_df = benchmark
-        self.complete_capital g
-        self.quantity
-        self.comission = comission
+    def __init__(self, df, complete_capital, quantity, comission, time_period):
+        self.__master_df = df
+        # self.benchmark_df = benchmark
+        self.__complete_capital = complete_capital
+        self.__quantity = quantity
+        self.__comission = comission
 
-        self.time_period = time_period
+        self.__time_period = time_period
 
-        self.general_info = {}
-        self.create_general_info()
-        self.performance_info = {}
-        self.create_performance_info()
-        self.all_trades_info = {}
-        self.create_all_trades()
+        self.__general_info = self.create_general_info()
+        self.__performance_info = self.create_performance_info()
+        self.__all_trades_info = self.create_all_trades()
+        self.__position_history = self.create_position_history_df()
+        self.__winners = self.create_winners()
+        self.__losers = self.create_losers()
+        self.__drawdowns = self.create_drawdowns()
+    
+    @property
+    def general_info(self):
+        return self.__general_info
+
+    @property
+    def performance_info(self):
+        return self.__performance_info
+    
+    @property
+    def all_trades_info(self):
+        return self.__all_trades_info
+
+    @property
+    def position_history(self):
+        return self.__position_history
+
+    @property
+    def winners(self):
+        return self.__winners
+
+    @property
+    def losers(self):
+        return self.__losers
+
+    @property
+    def drawdowns(self):
+        return self.__drawdowns
 
     def create_general_info(self):
-        self.general_info['Inital Capital'] = self.master_df['Capital'][0]
-        self.general_info['Ending Capital'] = self.master_df['Capital'][-1]
-        self.general_info['Net Profit'] = self.master_df['Capital'][0] - \
-            self.master_df['Capital'][-1]
-        self.general_info['Net Profit %'] = self.general_info['Net Profit'] / \
-            general_info['Inital Capital']
-        self.general_info['Exposure'] = self.general_info['Initial Capital'] / \
-            self.complete_capital
-        self.general_info['Annual Returns %'] = self.create_cagr(self.master_df['Equity'])
-        self.general_info['Transaction Costs'] = len(
-            self.master_df[self.master_df['Position'] != 0]) * self.quantity * self.comission
+        """
+        Return DataFrame with general information: Initial Capital, Ending Capital, Net Profit, Net Profit %, Initial Capital, Exposure, Annual Returns %, Transaction Costs
+
+        Returns:
+            pd.DataFrame: General Information DataFrame
+        """
+        general_info = pd.DataFrame(index = self.__master_df.index)
+        general_info['Initial Capital'] = self.__master_df['Capital'][0]
+        general_info['Ending Capital'] = self.__master_df['Capital'][-1]
+        general_info['Net Profit'] = self.__master_df['Capital'][-1]- \
+            self.__master_df['Capital'][0]
+        general_info['Net Profit %'] = general_info['Net Profit'] / \
+            general_info['Initial Capital']
+        general_info['Exposure'] = general_info['Initial Capital'] / \
+            self.__complete_capital
+        general_info['Annual Returns %'] = self.create_cagr(self.__master_df['Equity'])
+        general_info['Transaction Costs'] = len(
+            self.__master_df[self.__master_df['Position'] != 0]) * self.__quantity * self.__comission
+        
+        return general_info
+
 
     def create_performance_info(self):
-        self.performance_info['Sharpe Ratio'] = self.calculate_sharpe_ratio(self.master_df['Return'])
-        self.performance_info['Sortino Ratio'] = self.calculate_sortino_ratio(self.master_df['Return'])
-        beta, alpha = self.calculate_beta_alpha(self.master_df['Return'])
-        self.performance_info['Alpha'] = alpha
-        self.performance_info['Beta'] = beta
+        """
+        Returns DataFrame with performance measurements: Sharpe Ratio, Sortino Ratio, Alpha, Beta
+
+        Returns:
+            pd.DataFrame: Performance measurements DataFrame
+        """
+        performance_info = pd.DataFrame(index=self.__master_df.index)
+        performance_info['Sharpe Ratio'] = self.calculate_sharpe_ratio(self.__master_df['Return'])
+        performance_info['Sortino Ratio'] = self.calculate_sortino_ratio(self.__master_df['Return'])
+        beta, alpha = self.calculate_beta_alpha(
+            self.__master_df['Return'], self.__master_df['Return'])
+        performance_info['Alpha'] = alpha
+        performance_info['Beta'] = beta
+
+        return performance_info
     
     def create_all_trades(self):
-        self.all_trades_info['Avg. Return'] = self.master_df['Return'].mean()
-        self.all_trades_info['Avg. Return %'] = self.master_df['Return %'].mean()
-        self.all_trades_info['Avg. Bars held'] = self.get_bars_held().mean()
+        """
+        Returns DataFrame with info regarding all trades
+
+        Returns:
+            pd.DataFrame: Info regarding all trades DataFrame
+        """
+        all_trades_info = pd.DataFrame(index=self.__master_df.index)
+        all_trades_info['Avg. Return'] = self.__master_df['Return'].mean()
+        all_trades_info['Avg. Return %'] = self.__master_df['Return %'].mean()
+        all_trades_info['Avg. Bars held'] = round(self.get_bars_held().mean())
+
+        return all_trades_info
         
-    def create_trade_history_df(self):
+    def create_position_history_df(self):
+        """
+        Retuns DataFrame with history of position: Start Date, End Date, Return, Return %, Bars Held
+
+        Returns:
+            pd.DataFrame: History all positions DataFrame
+        """
         long_dates, short_dates, _ = self.get_long_short_dates()
-        pnl = self.master_df.loc[short_dates, 'Return']
-        pnl_pct = self.master_df.loc[short_dates, 'Return %']
+        pnl = self.__master_df.loc[short_dates[0], 'Return'].tolist()
+        pnl_pct = self.__master_df.loc[short_dates[0], 'Return %'].tolist()
         bars_held = self.get_bars_held()
+
         data = {
-            'Start Date': long_dates, 
-            'End Date': short_dates, 
+            'Start Date': pd.Series(long_dates[0]).tolist(),
+            'End Date': pd.Series(short_dates[0]).tolist(),
             'Return': pnl,
             'Return %': pnl_pct,
             'Bars Held': bars_held
             }
-        self.trade_history = pd.DataFrame(data=data)
+
+        return pd.DataFrame.from_dict(data, orient='index').transpose()
 
     def create_winners(self):
-        self.winners['Total Profit'] = self.trade_history['Return'][self.master.df['Return'] > 0].sum()
-        self.winners['Avg. Profit'] = self.trade_history['Return'][self.master.df['Return'] > 0].mean()
-        winner_bars = self.trade_history['Bars'][self.master.df['Return'] > 0].mean()
-        self.winners['Avg. Bars Held'] = self.trade_history['Bars'][self.master.df['Return'] > 0].mean()
-        self.winners['Max. Consecutive'] = self.get_consecutive()
-        self.winners['Largest Win'] = self.trade_history['Return'][self.master.df['Return'] > 0].max()
-        self.winners['Bars in Largest Win'] = self.trade_history['Bars'][self.winners['Largest Win']]
-
-    def create_losers(self):
-        self.losers['Total Loss'] = self.trade_history['Return'][self.master.df['Return'] < 0].sum()
-        self.losers['Avg. Loss'] = self.trade_history['Return'][self.master.df['Return'] < 0].mean()
-        loser_bars = self.trade_history['Bars'][self.master.df['Return'] < 0].mean()
-        self.losers['Avg. Bars Held'] = self.trade_history['Bars'][self.master.df['Return'] < 0].mean()
-        self.losers['Max. Consecutive'] = self.get_consecutive()
-        self.losers['Largest Loss'] = self.trade_history['Return'][self.master.df['Return'] < 0].max()
-        self.losers['Bars in Largest Win'] = self.trade_history['Bars'][self.losers['Largest Win']]
-
-    def create_drawdowns(self):
-        self.drawdowns['Max. Trade Drawdown']
-        self.drawdowns['Max. Trade % Drawdown']
-        self.drawdowns['Max. System Drawdown']
-        self.drawdowns['Max. System % Drawdown']
-
-
-    def get_bars_held(self, long_dates, short_dates periods='Daily'):
         """
-        Returns the bars held
+        Retuns DataFrame with infos about winning trades: Total Profit, Avg. Profit, Avg, Bars Held, Max. Consecutive, Largest Win, Bars in Largest Win
 
         Returns:
-            np.array : bars held
+            pd.DataFrame: Infos about winning trades DataFrame
+        """
+        winners = pd.DataFrame(index=self.__master_df.index)
+        winners['Total Profit'] = self.__position_history['Return'][self.__position_history['Return'] > 0].sum()
+        winners['Avg. Profit'] = self.__position_history['Return'][self.__position_history['Return'] > 0].mean()
+        winner_bars = self.__position_history['Bars Held'][self.__position_history['Return'] > 0]
+        winners['Avg. Bars Held'] = float('NaN') if winner_bars.empty else int(winner_bars.mean())
+        winners['Max. Consecutive'] = self.get_consecutive()
+        winners['Largest Win'] = self.__position_history['Return'][self.__position_history['Return'] > 0].max()
+        winners['Bars in Largest Win'] = self.__position_history['Bars Held'][self.__position_history['Bars Held']
+                                                                              == winners['Largest Win'][0]]
 
-        TO-DO:
-            Bars nicht nur in days time period -> welche
+        return winners
+
+    def create_losers(self):
+        """
+        Retuns DataFrame with infos about losing trades: Total Loss, Avg. Loss, Avg, Bars Held, Max. Consecutive, Largest Loss, Bars in Largest Loss
+
+        Returns:
+            pd.DataFrame: History all positions DataFrame
+        """
+        losers = pd.DataFrame(index=self.__master_df.index)
+        print('hierho')
+        print(self.__position_history['Return']
+              [self.__position_history['Return'] < 0])
+        losers['Total Loss'] = self.__position_history['Return'][self.__position_history['Return'] < 0].sum()
+        losers['Avg. Loss'] = self.__position_history['Return'][self.__position_history['Return'] < 0].mean()
+        loser_bars = self.__position_history['Bars Held'][self.__position_history['Return'] < 0]
+        losers['Avg. Bars Held'] = float('NaN') if loser_bars.empty else int(loser_bars.mean())
+        losers['Max. Consecutive'] = self.get_consecutive()
+        losers['Largest Loss'] = self.__position_history['Return'][self.__position_history['Return'] < 0].max()
+        losers['Bars in Largest Loss'] = self.__position_history['Bars Held'][self.__position_history['Bars Held'] == losers['Largest Loss'][0]]
+
+        return losers
+
+    def create_drawdowns(self):
+        """
+        Return DataFrame with infos about drawdown: Max. Trade Drawdown, Max. Trade % Drawdown
+
+        Returns:
+            [type]: [description]
+        """
+        
+        drawdowns = pd.DataFrame(index=self.__master_df.index)
+        drawdowns['Max. Trade Drawdown'], max_dd_duration = self.calculate_drawdowns(
+            self.__master_df['Equity'])
+        drawdowns['Max. Trade % Drawdown'], _ = self.calculate_drawdowns(
+            self.__master_df['Equity'])
+        drawdowns['Max. Trade Drawdown Duration'] = max_dd_duration
+        #self.drawdowns['Max. System Drawdown']
+        #self.drawdowns['Max. System % Drawdown']
+
+        return drawdowns
+
+
+    def get_bars_held(self):
+        """
+        Returns bars held
+
+        Returns:
+            np.array: bars held
         """
 
         long_dates, short_dates, _ = self.get_long_short_dates()
         bars_held = []
 
-        i in range(0, len(long_dates)):
-            long_index = self.master_df.get_loc(long_dates[i])
-            short_index = self.master_df.get_loc(long_dates[i])
+        for i in range(0, len(long_dates[0])):
+            
+            long_index = self.__master_df.index.get_loc(long_dates[0][i])
+            short_index = self.__master_df.index.get_loc(short_dates[0][i])
             bars = short_index - long_index
             bars_held.append(bars)
 
@@ -125,17 +224,17 @@ class SpreadSheet(object):
 
         consecutive = 0
         longest_run = 0
-        for return in self.trade_history['Return']:
+        for ret in self.__position_history['Return']:
             
             if of_wins:
-                if return > 0:
+                if ret > 0:
                     consecutive = consecutive + 1
                 else:
                     consecutive = 0
                     if consecutive > longest_run:
                         longest_run = consecutive
             else:
-                if return < 0:
+                if ret < 0:
                     consecutive = consecutive + 1
                 else:
                     consecutive = 0
@@ -143,35 +242,6 @@ class SpreadSheet(object):
                         longest_run = consecutive
 
         return longest_run
-
-
-
-    def get_bars_held_of(self, dates_of)
-        """
-        Returns numbers of bars held of specific case
-
-        Returns:
-            np.array: array of numbers of bars
-        """
-        _, short_dates = self.get_long_short_dates()
-        
-        specific_bars_held = []
-        for date in dates_of:
-            short_idx = short_dates.index(date)
-            specific_bars_held.append(bars_held[short_idx])
-        
-        return np.array(specific_bars_held)
-
-
-
-    def clear_weeknds(self, long_dates, short_dates):
-        num_of_weeknd_list = self.get_number_of_weeknds(long_dates, short_dates)
-        bars_held = short_dates - long_dates
-
-        for i in range(0, len(bars_held)):
-            bars_held[i] = bars_held[i] - num_of_weeknd_list[i]
-
-        return np.array(bars_held)
         
     def get_long_short_dates(self):
         """
@@ -180,8 +250,12 @@ class SpreadSheet(object):
         Returns:
             list: [description]
         """
-        short_dates = self.master_df[self.master_df['Position'] == -1].index
-        long_dates = self.master_df[self.master_df['Position'] == 1].index
+        long_dates = self.__master_df[self.__master_df['Position'] == 1].index
+        short_dates = self.__master_df[self.__master_df['Position'] == -1].index
+
+        long_dates_list = []
+        short_dates_list = []
+        excess_dates = []
 
         # clear excess dates
         if len(short_dates) < len(long_dates):
@@ -192,57 +266,80 @@ class SpreadSheet(object):
             excess = len(short_dates) - len(long_dates)
             short_dates_list = self.delete_list_by_index(short_dates, excess)
             excess_dates = [short_dates] - short_dates_list
+        else:
+            long_dates_list = [long_dates]
+            short_dates_list = [short_dates]
 
         return long_dates_list, short_dates_list, excess_dates
 
-      
-
     def delete_list_by_index(self, del_list, excess):
+        """
+        Deletes last excess entries of list
+
+        Args:
+            del_list (np.array): list to be shorten
+            excess (float): excess entries
+
+        Returns:
+            list: excess cleared list
+        """
         end = len(del_list)
         start = end - excess
         array = np.array(data)
         index = [i for i in range(start, end)]
         
         return list(np.delete(array,index))
+
+    def calculate_drawdowns(self, equity):
+        """
+        Calculates drawdowns of the equity curve & drawdown duration.
+
+        Args:
+            equity (pd Series): cumulative profit-loss curve
+
+        Returns:
+            pd DataFrame, float: drawdown, max. drawdown
+        """
+        hwm = np.zeros(len(equity.index))  # high water marks (global maximum)
+        # Get high water marks
+        for t in range(1, len(equity.index)):
+            hwm[t] = max(hwm[t-1], equity.iloc[t])
+
+        hwm_tmp = list(set(hwm))
+        hwm_dates = [equity[equity == mark].index[0] for mark in hwm_tmp]
+        hwm_dates.sort()
+        dd_durations = []
+
+        for i in range(len(hwm_dates)):
+
+            if i < len(hwm_dates)-1:
+                dd_durations.append(hwm_dates[i+1]-hwm_dates[i])
+
+        dd_max_duration = max(dd_durations)
+
+        # Get dates of whm
+
+        # Calculate drawdown, max. drawdown, max. drawdown duration
+        # performance = pd.DataFrame(index=equity.index)
+        drawdown = (hwm - equity) / hwm
+        drawdown[0] = 0.0
+
+        return drawdown, dd_max_duration
+
+    def calculate_sharpe_ratio(self, returns, timeframe="Daily"):
+        """
+        Calculates the Sharpe Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
+
+        Args:
+            returns (pd Series): return of strategy
+            timeframe (str, optional): desired trading periods. Defaults to "Daily".
+
+        Returns:
+            float: Sharpe Ration
+        """
+        periods = PERIODS[timeframe]
+        return np.sqrt(periods) * (np.mean(returns)/np.std(returns))
     
-    def get_number_of_weeknds(self, long_dates, short_dates):
-        """
-        Returns list with number of weeknds per time period
-
-        Args:
-            long_dates (pandas.core.indexes.datetimes.DatetimeIndex): Long Dates
-            short_dates (pandas.core.indexes.datetimes.DatetimeIndex): Short Dates
-
-        Returns:
-            list: list with number of weeknds per time period
-        """
-        num_weeknds = []
-        for i in range(0,len(long_dates):
-            num_weeknds.append(len(self.get_weeknd(long_dates[i], short_days[i])))
-        
-        return num_weeknds
-            
-
-
-    def get_weeknd(start_date, end_date, excluded=(6, 7)):
-        """
-        Returns weeknd days within time period
-
-        Args:
-            start_date (Timestamp): start date
-            end_date (Timestamp): end date
-            excluded (int, optional): numbers for weeknd days. Defaults to (6, 7).
-
-        Returns:
-            list: list with dates of weeknd days
-        """
-        weeknd_days = []
-        while d.date() <= end.date():
-            if d.isoweekday() in excluded:
-                days.append(d)
-            d += datetime.timedelta(days=1)
-        return weeknd_days
-
     def create_cagr(self, equity, periods="Daily"):
         """
         Calculates the Compound Annual Growth Rate (CAGR)
@@ -261,28 +358,26 @@ class SpreadSheet(object):
         years = len(equity) / float(periods)
         return (equity[-1] ** (1.0 / years)) - 1.0
 
-    def calculate_sharpe_ratio(self, returns, timeframe="Daily"):
+    def calculate_beta_alpha(self, returns_df, benchmark_df):
         """
-        Calculates the Sharpe Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
+        Calculates the Beta & Alpha of the strategy
 
         Args:
-            returns (pd Series): return of strategy
-            timeframe (str, optional): desired trading periods. Defaults to "Daily".
+            returns (pd.DataFrame): Returns
+            benchmark (pd.DataFrame): compared market index or broad benchmark
 
         Returns:
-            float: Sharpe Ration
+            float: alpha, beta
         """
-        periods = PERIODS[timeframe]
-        return np.sqrt(periods) * (np.mean(returns)/np.std(returns))
-
-    def calculate_beta_alpha(self, returns, benchmark):
-        beta = np.cov(returns, benchmark) / np.var(returns, benchmark)
+        returns = returns_df.to_numpy()
+        benchmark = benchmark_df.to_numpy()
+        numerator = np.cov(returns, benchmark)
+        denumerator = np.var(benchmark)
+        beta = numerator[0][0] / denumerator
         alpha = returns.mean() - beta * benchmark.mean()
         return beta, alpha
 
-
-
-    def calculate_sortino_ratio(returns, timeframe="Daily"):
+    def calculate_sortino_ratio(self, returns_df, timeframe="Daily"):
         """
         Calculates the Sortino Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
 
@@ -293,44 +388,32 @@ class SpreadSheet(object):
         Returns:
             float: Sortino Ration
         """
+        returns = returns_df.to_numpy()
         periods = PERIODS[timeframe]
+
         return np.sqrt(periods) * (np.mean(returns)) / np.std(returns[returns < 0])
 
-    def calculate_drawdowns(equity, type):
+    
+    def get_number_of_weeknds(self, long_dates, short_dates):
         """
-        Calculates drawdowns of the equity curve & drawdown duration.
+        Returns list with number of weeknds per time period
 
         Args:
-            equity (pd Series): cumulative profit-loss curve
+            long_dates (pandas.core.indexes.datetimes.DatetimeIndex): Long Dates
+            short_dates (pandas.core.indexes.datetimes.DatetimeIndex): Short Dates
 
         Returns:
-            pd DataFrame: drawdown, 
+            list: list with number of weeknds per time period
         """
-        hwm = np.zeros(len(equity.index))  # high water marks (global maximum)
+        num_weeknds = []
+        for i in range(0,len(long_dates)):
+            num_weeknds.append(len(self.get_weeknd(long_dates[i], short_days[i])))
+        
+        return num_weeknds
+            
 
-        # Get high water marks
-        for t in range(1, len(equity.index)):
-            hwm[t] = max(hwm[t-1], equity.iloc[t])
 
-        hwm_tmp = list(set(hwm))
+    
 
-        hwm_dates = [equity[equity == mark].index[0] for mark in hwm_tmp]
-        hwm_dates.sort()
-        dd_durations = []
-
-        for i in range(len(hwm_dates)):
-
-            if i < len(hwm_dates)-1:
-                dd_durations.append(hwm_dates[i+1]-hwm_dates[i])
-
-        dd_max_duration = max(dd_durations)
-
-        # Get dates of whm
-
-        # Calculate drawdown, max. drawdown, max. drawdown duration
-        performance = pd.DataFrame(index=equity.index)
-        performance["Drawdown"] = (hwm - equity) / hwm
-        performance["Drawdown"].iloc[0] = 0.0
-
-        # duration
-        return performance["Drawdown"], np.max(performance["Drawdown"]), dd_max_duration
+    
+    

@@ -1,7 +1,7 @@
 from data_prep.CSVDataPreparer import *
 from RSI import *
 from equity.Equity import *
-from statistics.performance_measurements import *
+from statistics.SpreadSheet import *
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
@@ -37,19 +37,47 @@ if __name__ == "__main__":
     #print(closes)
 
     input_df = closes[[symbol, 'Position']]
-
     equity = Equity(symbol, closes, start_capital, comission)
     equity.create()
-    eq = equity.get_dataframe()
+    eq = equity.equity_df
+
+    master_df = pd.concat([closes, eq], axis=1)
+
+    complete_capital = 50000
+    quantity = 5
+    time_period = 'days'
+    spreadsheet = SpreadSheet(
+        master_df, complete_capital, quantity, comission, time_period)
+
+    print('---------------------------------------------------------------------------------------')
+    print(spreadsheet.general_info)
+    print('---------------------------------------------------------------------------------------')
+    print(spreadsheet.performance_info)
+    print('---------------------------------------------------------------------------------------')
+    print(spreadsheet.all_trades_info)
+    print('---------------------------------------------------------------------------------------')
+    print(spreadsheet.position_history)
+    print('---------------------------------------------------------------------------------------')
+    print(spreadsheet.winners)
+    print('---------------------------------------------------------------------------------------')
+    print(spreadsheet.losers)
+    print('---------------------------------------------------------------------------------------')
+    print(spreadsheet.drawdowns)
+    print('---------------------------------------------------------------------------------------')
 
 
+    """
+    print(master_df)
+
+
+    complete_capital = 50000
+    quantity = 5
+    time_period = 'days'
+    spreadsheet = SpreadSheet(master_df, complete_capital, quantity, comission, time_period)
 
     a = np.array([3])
-    closes[]
-    
-    bing = closes[closes['Position'] == -1].index
-    bong = closes.loc[bing, 'Return']
-    print(bing.get_loc('2015-12-18 00:00:00+00:00'))
+    b = closes[symbol][closes['Position'] < 0]
+
     #print(bing)
 
     #print(do)
@@ -67,6 +95,6 @@ if __name__ == "__main__":
     #plt.scatter(closes.index, closes['Long_Signal'], color= "#57CE95", marker="^")
     #plt.show()
     
-    
+    """
     
 

@@ -9,6 +9,51 @@ PERIODS = {
     "Secondly": 252*6.5*60*60}
 
 
+def get_bars_held_of(self, dates_of):
+    """
+        Returns numbers of bars held of specific case
+
+        Returns:
+            np.array: array of numbers of bars
+        """
+     _, short_dates = self.get_long_short_dates()
+
+      specific_bars_held = []
+       for date in dates_of:
+            short_idx = short_dates.index(date)
+            specific_bars_held.append(bars_held[short_idx])
+
+        return np.array(specific_bars_held)
+
+
+def get_weeknd(start_date, end_date, excluded=(6, 7)):
+     """
+        Returns weeknd days within time period
+
+        Args:
+            start_date (Timestamp): start date
+            end_date (Timestamp): end date
+            excluded (int, optional): numbers for weeknd days. Defaults to (6, 7).
+
+        Returns:
+            list: list with dates of weeknd days
+        """
+      weeknd_days = []
+       while d.date() <= end.date():
+            if d.isoweekday() in excluded:
+                days.append(d)
+            d += datetime.timedelta(days=1)
+        return weeknd_days
+
+def clear_weeknds(self, long_dates, short_dates):
+        num_of_weeknd_list = self.get_number_of_weeknds(long_dates, short_dates)
+        bars_held = short_dates - long_dates
+
+        for i in range(0, len(bars_held)):
+            bars_held[i] = bars_held[i] - num_of_weeknd_list[i]
+
+        return np.array(bars_held)
+
 def aggregate_returns(returns, convert_to):
     """
     Aggregates returns Daily, Weekly, Monthly or Yearly.
