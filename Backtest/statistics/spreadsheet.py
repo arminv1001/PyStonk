@@ -9,22 +9,24 @@ PERIODS = {
 
 class SpreadSheet(object):
 
-    def __init__(self, df, complete_capital, quantity, comission, time_period):
+    def __init__(self, df, complete_capital, pos_size, comission, periodicity):
         self.__master_df = df
         # self.benchmark_df = benchmark
         self.__complete_capital = complete_capital
-        self.__quantity = quantity
+        self.__pos_size = pos_size # position size
         self.__comission = comission
 
-        self.__time_period = time_period
+        self.__periodicity = periodicity
 
         self.__general_info = self.create_general_info()
+        self.__trade_history = self.create_trade_history_df()
         self.__performance_info = self.create_performance_info()
         self.__all_trades_info = self.create_all_trades()
-        self.__position_history = self.create_position_history_df()
         self.__winners = self.create_winners()
         self.__losers = self.create_losers()
-        self.__drawdowns = self.create_drawdowns()
+
+        self.__drawdowns, self.__max_dd_duration = self.create_drawdowns()
+        self.__drawdowns_info = self.create_drawdown_info()
     
     @property
     def general_info(self):
@@ -39,8 +41,8 @@ class SpreadSheet(object):
         return self.__all_trades_info
 
     @property
-    def position_history(self):
-        return self.__position_history
+    def trade_history(self):
+        return self.__trade_history
 
     @property
     def winners(self):
@@ -54,6 +56,31 @@ class SpreadSheet(object):
     def drawdowns(self):
         return self.__drawdowns
 
+    @property
+    def max_dd_duration(self):
+        return self.__max_dd_duration
+
+    def get_info_df(self):
+        """
+        Returns DataFrame with all SpreadSheet Infos
+
+        Returns:
+            pd.DataFrame: SpreadSheet Infos
+        """
+        frames = [
+            self.__general_info,
+            self.__performance_info,
+            self.__all_trades_info,
+            self.__winners,
+            self.__losers,
+            self.__drawdowns_info
+        ]
+        print(self.__drawdowns_info)
+        print(self.__drawdowns_info['Max. Drawdown Duration'])
+        info_df = pd.concat(frames)
+        return info_df
+
+
     def create_general_info(self):
         """
         Return DataFrame with general information: Initial Capital, Ending Capital, Net Profit, Net Profit %, Initial Capital, Exposure, Annual Returns %, Transaction Costs
@@ -61,20 +88,53 @@ class SpreadSheet(object):
         Returns:
             pd.DataFrame: General Information DataFrame
         """
-        general_info = pd.DataFrame(index = self.__master_df.index)
-        general_info['Initial Capital'] = self.__master_df['Capital'][0]
-        general_info['Ending Capital'] = self.__master_df['Capital'][-1]
-        general_info['Net Profit'] = self.__master_df['Capital'][-1]- \
-            self.__master_df['Capital'][0]
-        general_info['Net Profit %'] = general_info['Net Profit'] / \
-            general_info['Initial Capital']
-        general_info['Exposure'] = general_info['Initial Capital'] / \
-            self.__complete_capital
-        general_info['Annual Returns %'] = self.create_cagr(self.__master_df['Equity'])
-        general_info['Transaction Costs'] = len(
-            self.__master_df[self.__master_df['Position'] != 0]) * self.__quantity * self.__comission
-        
-        return general_info
+        data = {
+            'Initial Capital': self.__master_df['Equity'][0],
+            'Ending Capital': self.__master_df['Equity'][-1],
+            'Net Profit': self.__master_df['Equity'][-1] - self.__master_df['Equity'][0],
+            'Net Profit %': (self.__master_df['Equity'][-1] - self.__master_df['Equity'][0]) / self.__master_df['Equity'][0],
+            'Exposure': self.__master_df['Equity'][0] / self.__complete_capital,
+            'Annual Returns %': self.create_cagr(self.__master_df['Equity']),
+            'Transaction Costs': len(self.__master_df[self.__master_df['Position'] != 0]) * self.__pos_size * self.__comission
+        }
+        return pd.DataFrame.from_dict(data, orient='index')
+    
+    def create_trade_history_df(self):
+        """
+        Retuns DataFrame with history of position: Start Date, End Date, Return, Return %, Bars Held
+
+        Returns:
+            pd.DataFrame: History all positions DataFrame
+        """
+        long_dates, short_dates, _ = self.get_long_short_dates()
+        returns, returns_pct = self.get_return_of_trades(
+            long_dates, short_dates)
+        bars_held = self.get_bars_held()
+
+        data = {
+            'Start Date': pd.Series(long_dates[0]).tolist(),
+            'End Date': pd.Series(short_dates[0]).tolist(),
+            'Return': returns,
+            'Return %': returns_pct,
+            'Bars Held': bars_held
+        }
+
+        return pd.DataFrame.from_dict(data, orient='index').transpose()
+
+    def get_return_of_trades(self, long_dates, short_dates):
+        returns = []
+        returns_pct = []
+
+        for i in range(0, len(long_dates[0])):
+            long_index = self.__master_df.index.get_loc(long_dates[0][i])
+            short_index = self.__master_df.index.get_loc(short_dates[0][i])
+            ret = self.__master_df['Close'][short_index] - \
+                self.__master_df['Close'][long_index]
+            ret_pct = ret / self.__master_df['Close'][long_index]
+            returns.append(ret)
+            returns_pct.append(ret_pct)
+
+        return returns, returns_pct
 
 
     def create_performance_info(self):
@@ -84,15 +144,17 @@ class SpreadSheet(object):
         Returns:
             pd.DataFrame: Performance measurements DataFrame
         """
-        performance_info = pd.DataFrame(index=self.__master_df.index)
-        performance_info['Sharpe Ratio'] = self.calculate_sharpe_ratio(self.__master_df['Return'])
-        performance_info['Sortino Ratio'] = self.calculate_sortino_ratio(self.__master_df['Return'])
-        beta, alpha = self.calculate_beta_alpha(
-            self.__master_df['Return'], self.__master_df['Return'])
-        performance_info['Alpha'] = alpha
-        performance_info['Beta'] = beta
+        sharpe = self.calculate_sharpe_ratio(self.__master_df['Profit/Loss'])
+        sortino = self.calculate_sortino_ratio(self.__master_df['Profit/Loss %'])
+        beta, alpha = self.calculate_beta_alpha(self.__master_df['Profit/Loss'], self.__master_df['Profit/Loss'])
+        data = {
+            'Sharpe Ratio': sharpe,
+            'Sortino Ratio': sortino,
+            'Alpha': alpha,
+            'Beta': beta
+        }
 
-        return performance_info
+        return pd.DataFrame.from_dict(data, orient='index')
     
     def create_all_trades(self):
         """
@@ -101,34 +163,13 @@ class SpreadSheet(object):
         Returns:
             pd.DataFrame: Info regarding all trades DataFrame
         """
-        all_trades_info = pd.DataFrame(index=self.__master_df.index)
-        all_trades_info['Avg. Return'] = self.__master_df['Return'].mean()
-        all_trades_info['Avg. Return %'] = self.__master_df['Return %'].mean()
-        all_trades_info['Avg. Bars held'] = round(self.get_bars_held().mean())
-
-        return all_trades_info
-        
-    def create_position_history_df(self):
-        """
-        Retuns DataFrame with history of position: Start Date, End Date, Return, Return %, Bars Held
-
-        Returns:
-            pd.DataFrame: History all positions DataFrame
-        """
-        long_dates, short_dates, _ = self.get_long_short_dates()
-        pnl = self.__master_df.loc[short_dates[0], 'Return'].tolist()
-        pnl_pct = self.__master_df.loc[short_dates[0], 'Return %'].tolist()
-        bars_held = self.get_bars_held()
-
         data = {
-            'Start Date': pd.Series(long_dates[0]).tolist(),
-            'End Date': pd.Series(short_dates[0]).tolist(),
-            'Return': pnl,
-            'Return %': pnl_pct,
-            'Bars Held': bars_held
-            }
+            'Avg. Return': self.__trade_history['Return'].mean(),
+            'Avg. Return %': self.__trade_history['Return %'].mean(),
+            'Avg. Bars held': round(self.get_bars_held().mean())
+        }
 
-        return pd.DataFrame.from_dict(data, orient='index').transpose()
+        return pd.DataFrame.from_dict(data, orient='index')
 
     def create_winners(self):
         """
@@ -137,17 +178,22 @@ class SpreadSheet(object):
         Returns:
             pd.DataFrame: Infos about winning trades DataFrame
         """
-        winners = pd.DataFrame(index=self.__master_df.index)
-        winners['Total Profit'] = self.__position_history['Return'][self.__position_history['Return'] > 0].sum()
-        winners['Avg. Profit'] = self.__position_history['Return'][self.__position_history['Return'] > 0].mean()
-        winner_bars = self.__position_history['Bars Held'][self.__position_history['Return'] > 0]
-        winners['Avg. Bars Held'] = float('NaN') if winner_bars.empty else int(winner_bars.mean())
-        winners['Max. Consecutive'] = self.get_consecutive()
-        winners['Largest Win'] = self.__position_history['Return'][self.__position_history['Return'] > 0].max()
-        winners['Bars in Largest Win'] = self.__position_history['Bars Held'][self.__position_history['Bars Held']
-                                                                              == winners['Largest Win'][0]]
+       
+        winner_bars = self.__trade_history['Bars Held'][self.__trade_history['Return'] > 0]
+        largest_win = self.__trade_history['Return'][self.__trade_history['Return'] > 0].max(
+        )
 
-        return winners
+        data = {
+            'Total Profit': self.__trade_history['Return'][self.__trade_history['Return'] > 0].sum(),
+            'Avg. Profit': self.__trade_history['Return'][self.__trade_history['Return'] > 0].mean(),
+            'Avg. Bars Held': float('NaN') if winner_bars.empty else int(winner_bars.mean()),
+            'Max. Consecutive': self.get_consecutive(),
+            'Largest Win': largest_win,
+            'Bars in Largest Win': self.__trade_history['Bars Held'][self.__trade_history['Return'] == largest_win].iloc[0]
+
+        }
+
+        return pd.DataFrame.from_dict(data, orient='index')
 
     def create_losers(self):
         """
@@ -156,19 +202,19 @@ class SpreadSheet(object):
         Returns:
             pd.DataFrame: History all positions DataFrame
         """
-        losers = pd.DataFrame(index=self.__master_df.index)
-        print('hierho')
-        print(self.__position_history['Return']
-              [self.__position_history['Return'] < 0])
-        losers['Total Loss'] = self.__position_history['Return'][self.__position_history['Return'] < 0].sum()
-        losers['Avg. Loss'] = self.__position_history['Return'][self.__position_history['Return'] < 0].mean()
-        loser_bars = self.__position_history['Bars Held'][self.__position_history['Return'] < 0]
-        losers['Avg. Bars Held'] = float('NaN') if loser_bars.empty else int(loser_bars.mean())
-        losers['Max. Consecutive'] = self.get_consecutive()
-        losers['Largest Loss'] = self.__position_history['Return'][self.__position_history['Return'] < 0].max()
-        losers['Bars in Largest Loss'] = self.__position_history['Bars Held'][self.__position_history['Bars Held'] == losers['Largest Loss'][0]]
+        loser_bars = self.__trade_history['Bars Held'][self.__trade_history['Return'] < 0]
+        largest_loss = self.__trade_history['Return'][self.__trade_history['Return'] < 0].max(
+        )
+        data = {
+            'Total Profit': self.__trade_history['Return'][self.__trade_history['Return'] < 0].sum(),
+            'Avg. Profit': self.__trade_history['Return'][self.__trade_history['Return'] < 0].mean(),
+            'Avg. Bars Held': float('NaN') if loser_bars.empty else int(loser_bars.mean()),
+            'Max. Consecutive': self.get_consecutive(),
+            'Largest Loss': self.__trade_history['Return'][self.__trade_history['Return'] > 0].max(),
+            'Bars in Largest Loss': self.__trade_history['Bars Held'][self.__trade_history['Return'] == largest_loss].iloc[0]
+        }
 
-        return losers
+        return pd.DataFrame.from_dict(data, orient='index')
 
     def create_drawdowns(self):
         """
@@ -178,17 +224,25 @@ class SpreadSheet(object):
             [type]: [description]
         """
         
-        drawdowns = pd.DataFrame(index=self.__master_df.index)
-        drawdowns['Max. Trade Drawdown'], max_dd_duration = self.calculate_drawdowns(
+        drawdowns_array, max_dd_duration = self.calculate_drawdowns(
             self.__master_df['Equity'])
-        drawdowns['Max. Trade % Drawdown'], _ = self.calculate_drawdowns(
-            self.__master_df['Equity'])
-        drawdowns['Max. Trade Drawdown Duration'] = max_dd_duration
-        #self.drawdowns['Max. System Drawdown']
-        #self.drawdowns['Max. System % Drawdown']
+        drawdowns_array_pct, _ = self.calculate_drawdowns(
+            self.__master_df['Equity %'])
+        drawdowns = pd.DataFrame(data=drawdowns_array,
+                                 index=self.__master_df.index)
+        
+        drawdowns['Drawdown %'] = drawdowns_array_pct
+        drawdowns = drawdowns.rename(columns={'Equity':'Drawdown'})
+        return drawdowns, max_dd_duration
 
-        return drawdowns
-
+    def create_drawdown_info(self):
+        
+        data = {
+            'Max. Drawdown': max(self.__drawdowns['Drawdown']),
+            'Max. Drawdown %': max(self.__drawdowns['Drawdown %']),
+            'Max. Drawdown Duration': str(self.__max_dd_duration)
+        }
+        return pd.DataFrame.from_dict(data, orient='index')
 
     def get_bars_held(self):
         """
@@ -224,7 +278,7 @@ class SpreadSheet(object):
 
         consecutive = 0
         longest_run = 0
-        for ret in self.__position_history['Return']:
+        for ret in self.__trade_history['Return']:
             
             if of_wins:
                 if ret > 0:
@@ -300,18 +354,18 @@ class SpreadSheet(object):
         Returns:
             pd DataFrame, float: drawdown, max. drawdown
         """
+
         hwm = np.zeros(len(equity.index))  # high water marks (global maximum)
         # Get high water marks
-        for t in range(1, len(equity.index)):
+        for t in range(0, len(equity.index)):
             hwm[t] = max(hwm[t-1], equity.iloc[t])
-
-        hwm_tmp = list(set(hwm))
+        hwm_tmp = list(set(hwm)) # clear redundancy
         hwm_dates = [equity[equity == mark].index[0] for mark in hwm_tmp]
+
         hwm_dates.sort()
         dd_durations = []
 
         for i in range(len(hwm_dates)):
-
             if i < len(hwm_dates)-1:
                 dd_durations.append(hwm_dates[i+1]-hwm_dates[i])
 
@@ -321,8 +375,8 @@ class SpreadSheet(object):
 
         # Calculate drawdown, max. drawdown, max. drawdown duration
         # performance = pd.DataFrame(index=equity.index)
+
         drawdown = (hwm - equity) / hwm
-        drawdown[0] = 0.0
 
         return drawdown, dd_max_duration
 
@@ -356,7 +410,7 @@ class SpreadSheet(object):
         """
         periods = PERIODS[periods]
         years = len(equity) / float(periods)
-        return (equity[-1] ** (1.0 / years)) - 1.0
+        return (equity[-1] ** (1.0 / years)) - 1.0 
 
     def calculate_beta_alpha(self, returns_df, benchmark_df):
         """

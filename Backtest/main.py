@@ -6,6 +6,91 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
+import streamlit as st
+# streamlit run dashboard.py
+
+st.title("Dashboard")
+
+
+def create_dashboard(symbol, master_df, trade_history_df, drawdown_df, spreadsheet_df):
+
+    st.sidebar.header('Menu')
+    
+    dashboard_button = st.sidebar.button('Dashboard')
+    trade_history_button = st.sidebar.button('Trade History')
+    equity_button = st.sidebar.button('Equity')
+    drawdown_button = st.sidebar.button('Drawdown')
+    spreadsheet_button = st.sidebar.button('SpreadSheet')
+    settings_button = st.sidebar.button('Settings')
+
+    if settings_button:
+
+        st.header('General')
+        st.selectbox('Choose your strategy', ['Strategy 1', 'Strategy 2'])
+        st.multiselect('Choose your Benchmark', [
+                            'Benchmark 1', 'Benchmark 2'])
+        st.multiselect('Choose your Data', ['Data 1', 'Data 2'])
+        st.header('Date & Time')
+        st.date_input('Start Date')
+        st.time_input('Start Time')
+        st.date_input('End Date')
+        st.time_input('End Time')
+        st.select_slider('Periodicity', ['1min', '5min', '15min', '1h', '6h', '1d', '5d', '1m', '3m', '6m', '1y', '5y', 'all'])
+        st.header('Cash & Co.')
+        st.number_input('Complete Capital')
+        st.number_input('Comission')
+
+    if trade_history_button:
+        st.dataframe(trade_history_df)
+
+    if equity_button:
+        st.header('Equity')
+
+        equity_rad = st.radio('in', ['absolute', 'percentage %'])
+        if equity_rad == 'absolute':
+            equity_data = master_df['Equity']
+            
+        elif equity_rad == 'percentage %':
+            equity_data = master_df['Equity %']
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=master_df.index, y=equity_data))
+        fig.layout.update(title_text='Equity', xaxis_rangeslider_visible=True)
+        st.plotly_chart(fig)
+
+        st.dataframe(equity_data)
+    
+    if dashboard_button:
+        st.header(symbol)
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=master_df.index, y=master_df['Close'], name="Close Price"))
+        fig.layout.update(
+            title_text=symbol, xaxis_rangeslider_visible=True)
+        st.plotly_chart(fig)
+
+    if drawdown_button:
+        st.header('Drawdown')
+
+        equity_rad = st.radio('in', ['absolute', 'percentage %'])
+        if equity_rad == 'absolute':
+            equity_data = drawdown_df['Drawdown']
+        elif equity_rad == 'percentage %':
+            equity_data = drawdown_df['Drawdown %']
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=master_df.index, y=equity_data))
+        fig.layout.update(
+            title_text='Drawdown', xaxis_rangeslider_visible=True)
+        st.plotly_chart(fig)
+
+    if spreadsheet_button:
+        st.header('SpreadSheet')
+
+        st.dataframe(spreadsheet_df)
+
 
 
 if __name__ == "__main__":
@@ -34,11 +119,12 @@ if __name__ == "__main__":
     closes['Short_Signal'] = closes[symbol][closes['Position'] == -1]
     closes['Long_Signal'] = closes[symbol][closes['Position'] == 1]
 
+
+    closes = closes.rename(columns={symbol:'Close'})
+
     #print(closes)
 
-    input_df = closes[[symbol, 'Position']]
     equity = Equity(symbol, closes, start_capital, comission)
-    equity.create()
     eq = equity.equity_df
 
     master_df = pd.concat([closes, eq], axis=1)
@@ -49,6 +135,16 @@ if __name__ == "__main__":
     spreadsheet = SpreadSheet(
         master_df, complete_capital, quantity, comission, time_period)
 
+    spreadsheet_df = spreadsheet.get_info_df()
+
+    trade_history_df = spreadsheet.trade_history
+    drawdowns_df = spreadsheet.drawdowns
+    print(spreadsheet_df)
+
+    create_dashboard(symbol, master_df, trade_history_df,
+                     drawdowns_df, spreadsheet_df)
+
+    """
     print('---------------------------------------------------------------------------------------')
     print(spreadsheet.general_info)
     print('---------------------------------------------------------------------------------------')
@@ -66,7 +162,7 @@ if __name__ == "__main__":
     print('---------------------------------------------------------------------------------------')
 
 
-    """
+    
     print(master_df)
 
 

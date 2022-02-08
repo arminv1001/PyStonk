@@ -5,57 +5,65 @@ import pandas as pd
 
 class Equity(object):
 
-    def __init__(self, __symbol, df, start_capital, comission):
+    def __init__(self, symbol, df, start_capital, comission, size=1):
 
         """
         Note:
         df: DataFrame contains Close Price, Position
         """
-        self.__symbol = __symbol
+        self.__symbol = symbol
         self.__master_df = df
-        self.__equity_df = pd.DataFrame(index = self.__master_df.index)
         self.__comission = comission
-
-        self.__master_df['Capital'] = np.nan
-        self.__master_df['Capital'][0] = start_capital
-        self.__master_df['Size'] = 1 # wie wird das angeben sp äter ?
+        self.__start_capital = start_capital
+        self.__size = size
+        self.__equity_df = self.create_equity()
 
     @property
     def equity_df(self):
         return self.__equity_df
 
-    def create(self):
-        
-        self.create_capital_col()    
-
-        self.__equity_df['Return'] = self.__master_df['Capital'].diff() # Profit & Loss between Rows
-        self.__equity_df['Return'][0] = 0 # Profit & Loss in % between Rows
-
-        self.__equity_df['Return %'] = self.__master_df['Capital'].pct_change()
-        self.__equity_df['Return %'][0] = 0
-
-        # cumulative Return
-        self.__equity_df['Equity'] = self.__equity_df['Return'].cumsum()
-        self.__equity_df['Equity'][0] = 0
-
-        self.__equity_df['Equity %'] = self.__equity_df['Return %'].cumsum()  # cumulative Return %
-        self.__equity_df['Equity %'][0] = 0
-
-    def create_capital_col(self):
+    def create_equity(self):
         """
         Creates a column in MasterDataFrame which contains the current capital
         """
-        capital = self.__master_df['Capital'][0]
+        equity_df = pd.DataFrame(index=self.__master_df.index)
+        equity_df['Equity'] = np.nan
+        equity_df['Equity %'] = np.nan
+        old_capital = self.__start_capital
+
+
         for index in self.__master_df[self.__master_df['Position'] != 0].index: # go through rows where a Position is indicated
             current_row = self.__master_df.loc[index] 
-            capital = self._calculate_new_capital(capital, current_row)
-            self.__master_df.loc[index, 'Capital'] = capital # set new capital in cell
+            new_capital = self.calculate_new_capital(old_capital, current_row)
+            # set new capital in cell
+            equity_df.loc[index, 'Equity'] = new_capital
+            equity_df.loc[index, 'Equity %'] = new_capital / \
+                old_capital  # set new capital in cell
+            old_capital = new_capital
+        
+        
 
-        self.__master_df['Capital'] = self.__master_df['Capital'].fillna(
+        equity_df['Equity'][0] = self.__start_capital
+        equity_df['Equity %'][0] = 1
+
+        equity_df = equity_df.fillna(
             method="ffill")  # forward fill NaNs with current capital
+        
+        #equity_df = equity_df['Equity'].fillna(self.__start_capital)
+        
+
+        #equity_df = equity_df['Equity %'].fillna(1)
+
+        # Profit & Loss between Rows
+        equity_df['Profit/Loss'] = equity_df['Equity'].diff()
+        equity_df['Profit/Loss'][0] = 0
+        equity_df['Profit/Loss %'] = equity_df['Equity %'].diff()
+        equity_df['Profit/Loss'][0] = 0
+
+        return equity_df
 
 
-    def _calculate_new_capital(self, old_capital, current_row):
+    def calculate_new_capital(self, old_capital, current_row):
         """
         Calculates the current capital after the indicated trade with
         current capital = current capital * factor (close price * order size - comission)
@@ -69,25 +77,11 @@ class Equity(object):
         """
         factor = current_row['Position'] # Long: -1, Short: +1
         new_capital = old_capital - factor * \
-            (current_row[self.__symbol] * current_row['Size'] -
+            (current_row['Close'] * self.__size -
              self.__comission)  # 'AAPL' = 'Close Price'
         return new_capital
 
         
-        
-    def get_dataframe(self):
-        
-        return self.__master_df.drop(columns=[self.__symbol, 'Position'])
-
-        """
-        def _create_id(self):
-            
-            Creates unique identifier for trade: "<__Symbol> + <crosssum of date>"
-            
-            date = self.opendt.split(" ")[0].split("-")
-            date = [int(string) for string in date]
-            date_crosssum = sum(date)
-            self.id = self.__symbol + str(date_crosssum)
-        """
+    
 
 
