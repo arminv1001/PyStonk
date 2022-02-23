@@ -12,11 +12,23 @@ import oandapyV20.endpoints.orders as orders
 #TODO Place Stoploss
 
 class Oanda(Broker):
-        def __init__(self, BrokerName, ApiUrl):
+        def __init__(self, BrokerName, ApiUrl, demo=True):
             super().__init__(BrokerName, ApiUrl)
-            self.env = "demo"
+            
             self.API_URL,self.ACCESS_TOKEN,self.ACCOUNT_ID = self.readLoginData()
 
+        def setEnv(self,demo:bool):
+            """Set if live or demo account
+
+            Args:
+                demo (Boolean): True if demo. False if live
+            """
+            if demo == True:
+                self.env = "demo"
+            else:
+                self.env = "live"
+                
+        
         def readLoginData(self):
             """Read login data from text file
 
@@ -41,7 +53,7 @@ class Oanda(Broker):
                 takeprofit (float, optional): Takeprofit-price. Defaults to None.
 
             Returns:
-                int: [description]
+                int: Order ID
             """
             #TODO Stoploss
             #TODO Takeprofit
@@ -90,7 +102,7 @@ class Oanda(Broker):
                 json (str): String in json format
 
             Returns:
-                pd.dataframe: Pandas dataframe
+                pd.dataframe: Pandas dataframe time series
             """
             json_file = json.json()
             price_json = json_file["candles"]
@@ -119,7 +131,7 @@ class Oanda(Broker):
                 timeframe (str, optional): timeframe. Defaults to "D".
 
             Returns:
-                pd.DataFrame: [description]
+                pd.DataFrame: time series
             """
             from_time = time.mktime((start_date).timetuple())
             to_time = time.mktime((end_date).timetuple())
