@@ -3,7 +3,7 @@ class Broker:
     ## Abstrakte Klasse
     def __init__(self,BrokerName,ApiUrl):
         self.__broker_name = BrokerName
-        self.__api_url = ApiUrl
+        self.API_URL = ApiUrl
     
     def getBrokerName(self):
         return self.__broker_name

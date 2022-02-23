@@ -14,7 +14,7 @@ import oandapyV20.endpoints.orders as orders
 class Oanda(Broker):
         def __init__(self, BrokerName, ApiUrl, demo=True):
             super().__init__(BrokerName, ApiUrl)
-            
+            self.setEnv(demo)
             self.API_URL,self.ACCESS_TOKEN,self.ACCOUNT_ID = self.readLoginData()
 
         def setEnv(self,demo:bool):
@@ -36,7 +36,7 @@ class Oanda(Broker):
                 loginData: Login data
             """
             dirname = os.path.dirname(__file__)
-            file = os.path.join(dirname, "./Broker/LoginData/OandaData" + self.env + ".txt")
+            file = os.path.join(dirname, "./Broker/LoginData/OandaData_" + self.env + ".txt")
             loginData = []
             with open(file) as f:
                 contents = f.readlines()  # API_URL # ACCESS_TOKEN # ACCOUNT_ID

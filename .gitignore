@@ -128,4 +128,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-Broker/LoginData/OandaDataDemo.txt
+Broker/LoginData/OandaData_Demo.txt
