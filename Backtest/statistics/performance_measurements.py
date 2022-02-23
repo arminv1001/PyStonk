@@ -1,86 +1,171 @@
-from itertools import groupby
 import numpy as np
 import pandas as pd
+from tools.toolbox import *
 
 PERIODS = {
+    "Annually": 12,
     "Daily": 252,
     "Hourly": 252*6.5,
     "Minutely": 252*6.5*60,
     "Secondly": 252*6.5*60*60}
 
+MAX_DD_D_PERIOD = np.power(60, 2)*24
 
-def get_bars_held_of(self, dates_of):
+
+def get_drawdowns(master_df):
     """
-        Returns numbers of bars held of specific case
+    Return DataFrame with infos about drawdown: Max. Trade Drawdown, Max. Trade % Drawdown
 
-        Returns:
-            np.array: array of numbers of bars
-        """
-     _, short_dates = self.get_long_short_dates()
-
-      specific_bars_held = []
-       for date in dates_of:
-            short_idx = short_dates.index(date)
-            specific_bars_held.append(bars_held[short_idx])
-
-        return np.array(specific_bars_held)
-
-
-def get_weeknd(start_date, end_date, excluded=(6, 7)):
-     """
-        Returns weeknd days within time period
-
-        Args:
-            start_date (Timestamp): start date
-            end_date (Timestamp): end date
-            excluded (int, optional): numbers for weeknd days. Defaults to (6, 7).
-
-        Returns:
-            list: list with dates of weeknd days
-        """
-      weeknd_days = []
-       while d.date() <= end.date():
-            if d.isoweekday() in excluded:
-                days.append(d)
-            d += datetime.timedelta(days=1)
-        return weeknd_days
-
-def clear_weeknds(self, long_dates, short_dates):
-        num_of_weeknd_list = self.get_number_of_weeknds(long_dates, short_dates)
-        bars_held = short_dates - long_dates
-
-        for i in range(0, len(bars_held)):
-            bars_held[i] = bars_held[i] - num_of_weeknd_list[i]
-
-        return np.array(bars_held)
-
-def aggregate_returns(returns, convert_to):
+    Returns:
+        pd.Dataframe: master_df
     """
-    Aggregates returns Daily, Weekly, Monthly or Yearly.
+
+    drawdowns_array, max_dd_duration = calculate_drawdowns(master_df['Equity'])
+    drawdowns_array_pct, _ = calculate_drawdowns(master_df['Equity %'])
+    drawdowns = pd.DataFrame(data=drawdowns_array,
+                                index=master_df.index)
+
+    drawdowns['Drawdown %'] = drawdowns_array_pct
+    drawdowns = drawdowns.rename(columns={'Equity': 'Drawdown'})
+    return drawdowns, max_dd_duration
+    
+def get_consecutive(trade_history, of_wins=True):
+    """
+    Returns the value of the longest consecutive of winners/losers
+
+    Args:
+
+        of_wins (bool, optional): winners or losers. Defaults to True.
+
+    Returns:
+        float: consecutive
+    """
+
+    consecutive = 0
+    longest_run = 0
+    for ret in trade_history:
+        
+        if of_wins:
+            if ret > 0:
+                consecutive = consecutive + 1
+            else:
+                consecutive = 0
+                if consecutive > longest_run:
+                    longest_run = consecutive
+        else:
+            if ret < 0:
+                consecutive = consecutive + 1
+            else:
+                consecutive = 0
+                if consecutive > longest_run:
+                    longest_run = consecutive
+
+    return longest_run
+    
+
+def calculate_drawdowns(equity):
+    """
+    Calculates drawdowns of the equity curve & drawdown duration.
+
+    Args:
+        equity (pd Series): cumulative profit-loss curve
+
+    Returns:
+        pd DataFrame, float: drawdown, max. drawdown
+    """
+
+    hwm = np.zeros(len(equity.index))  # high water marks (global maximum)
+    # Get high water marks
+    for t in range(0, len(equity.index)):
+        hwm[t] = max(hwm[t-1], equity.iloc[t])
+    hwm_tmp = list(set(hwm)) # clear redundancy
+    hwm_dates = [equity[equity == mark].index[0] for mark in hwm_tmp]
+
+    hwm_dates.sort()
+    dd_durations = []
+
+    for i in range(len(hwm_dates)):
+        if i < len(hwm_dates)-1:
+            dd_durations.append(hwm_dates[i+1]-hwm_dates[i])
+
+    dd_max_duration = max(dd_durations)
+
+    # Get dates of whm
+
+    # Calculate drawdown, max. drawdown, max. drawdown duration
+    # performance = pd.DataFrame(index=equity.index)
+
+    drawdown = (hwm - equity) / hwm
+
+    return drawdown, dd_max_duration
+
+def calculate_sharpe_ratio(returns, timeframe=True, period="Annually"):
+    """
+    Calculates the Sharpe Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
 
     Args:
         returns (pd Series): return of strategy
-        convert_to (string): desired timeframe to be converted to
+        timeframe (str, optional): desired trading periods. Defaults to "Daily".
+
+    Returns:
+        float: Sharpe Ration
     """
-    def cumulate_returns(x):
-        return np.exp(np.log(1 + x).cumsum())[-1] - 1
 
-    if convert_to == 'weekly':
-        return returns.groupby(
-            [lambda x: x.year,
-             lambda x: x.month,
-             lambda x: x.isocalendar()[1]]).apply(cumulate_returns)
-    elif convert_to == 'monthly':
-        return returns.groupby(
-            [lambda x: x.year, lambda x: x.month]).apply(cumulate_returns)
-    elif convert_to == 'yearly':
-        return returns.groupby(
-            [lambda x: x.year]).apply(cumulate_returns)
+    if timeframe:
+        periods = PERIODS[period]
     else:
-        ValueError('convert_to must be weekly, monthly or yearly')
+        periods = 1
+    
+    rfr = 0 # risk-free rate
+    return np.sqrt(periods) * ((np.mean(returns)-rfr) / np.std(returns))
 
+def calculate_sortino_ratio(returns, timeframe=True, period="Annually"):
+    """
+    Calculates the Sortino Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
 
-def create_cagr(equity, periods="Daily"):
+    Args:
+        returns (pd Series): return of strategy
+        timeframe (str, optional): desired trading periods. Defaults to "Daily".
+
+    Returns:
+        float: Sortino Ration
+    """
+    if timeframe:
+        periods = PERIODS[period]
+    else:
+        periods = 1
+
+    rfr = 0  # risk-free rate
+
+    return np.sqrt(periods) * ((np.mean(returns)-rfr) / np.std(returns[returns < 0]))
+
+def calculate_mar_ratio(cagr, max_dd):
+    """
+    Calculates the MAR Ratio of the strategy.
+
+    Args:
+        cagr (float): compound annual growth rate %
+        max_dd (float): maximum drawdown in % 
+
+    Returns:
+        float: MAR Ration
+    """
+    return cagr/max_dd
+
+def calculate_calmar_ratio(rp, max_dd):
+    """
+    Calculates the Calmar Ratio of the strategy.
+
+    Args:
+        rp (float): portfolio return %
+        max_dd (float): maximum drawdown in % 
+
+    Returns:
+        float: Calmar Ration
+    """
+    return rp/max_dd
+
+def calculate_cagr(equity, periods="Daily"):
     """
     Calculates the Compound Annual Growth Rate (CAGR)
     for the portfolio, by determining the number of years
@@ -94,78 +179,68 @@ def create_cagr(equity, periods="Daily"):
     Returns:
         float: CAGR
     """
+    periods = PERIODS[periods]
     years = len(equity) / float(periods)
-    return (equity[-1] ** (1.0 / years)) - 1.0
+    return (equity[-1] ** (1.0 / years)) - 1.0 
 
-def calculate_sharpe_ratio(returns, timeframe="Daily"):
+def calculate_beta_alpha(returns_df, benchmark_df):
     """
-    Calculates the Sharpe Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
+    Calculates the Beta & Alpha of the strategy
 
     Args:
-        returns (pd Series): return of strategy
-        timeframe (str, optional): desired trading periods. Defaults to "Daily".
+        returns (pd.DataFrame): Returns
+        benchmark (pd.DataFrame): compared market index or broad benchmark
 
     Returns:
-        float: Sharpe Ration
+        float: alpha, beta
     """
-    periods = PERIODS[timeframe]
-    return np.sqrt(periods) * (np.mean(returns)/np.std(returns))
+    returns = returns_df.to_numpy()
+    benchmark = benchmark_df.to_numpy()
+    numerator = np.cov(returns.astype(float), benchmark.astype(float))
+    denumerator = np.var(benchmark)
+    beta = numerator[0][0] / denumerator
+    alpha = returns.mean() - beta * benchmark.mean()
+    return beta, alpha
 
-def calculate_sortino_ratio(returns, timeframe="Daily"):
+def get_return_of_trades(master_df, long_dates, short_dates):
+    returns = []
+    returns_pct = []
+
+    for i in range(0, len(long_dates)):
+        long_index = master_df.index.get_loc(long_dates[i])
+        short_index = master_df.index.get_loc(short_dates[i])
+        ret = master_df[short_index] - \
+            master_df[long_index]
+        ret_pct = ret / master_df[long_index]
+        returns.append(ret)
+        returns_pct.append(ret_pct)
+
+    return returns, returns_pct
+
+
+def get_bars_held(master_df):
     """
-    Calculates the Sortino Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
+        Returns bars held
 
-    Args:
-        returns (pd Series): return of strategy
-        timeframe (str, optional): desired trading periods. Defaults to "Daily".
+        Returns:
+            np.array: bars held
+        """
 
-    Returns:
-        float: Sortino Ration
-    """
-    periods = PERIODS[timeframe]
-    return np.sqrt(periods) * (np.mean(returns)) / np.std(returns[returns < 0])
+    long_dates, short_dates, _ = get_long_short_dates(master_df)
+    bars_held = []
 
-def calculate_drawdowns(equity, type):
-    """
-    Calculates drawdowns of the equity curve & drawdown duration.
+    for i in range(0, len(long_dates)):
 
-    Args:
-        equity (pd Series): cumulative profit-loss curve
+        short_index = master_df.index.get_loc(short_dates[i])
+        long_index = master_df.index.get_loc(long_dates[i])
+        bars = short_index - long_index
+        bars_held.append(bars)
 
-    Returns:
-        pd DataFrame: drawdown, 
-    """
-    hwm = np.zeros(len(equity.index)) # high water marks (global maximum)
+    return np.array(bars_held)
+
+
+
+
     
-    # Get high water marks
-    for t in range(1, len(equity.index)):
-        hwm[t] = max(hwm[t-1], equity.iloc[t])
-    
-    hwm_tmp = list(set(hwm))
-    
-    hwm_dates = [equity[equity == mark].index[0] for mark in hwm_tmp]
-    hwm_dates.sort()
-    dd_durations = []
 
-    for i in range(len(hwm_dates)):
-        
-        if i < len(hwm_dates)-1:
-            dd_durations.append(hwm_dates[i+1]-hwm_dates[i])
-    
-    dd_max_duration = max(dd_durations)
-    
-    
-    # Get dates of whm
-    
-    # Calculate drawdown, max. drawdown, max. drawdown duration
-    performance = pd.DataFrame(index=equity.index)
-    performance["Drawdown"] = (hwm - equity) / hwm
-    performance["Drawdown"].iloc[0] = 0.0
-
-
-    return performance["Drawdown"], np.max(performance["Drawdown"]), # duration
-
-
-        
-    
 

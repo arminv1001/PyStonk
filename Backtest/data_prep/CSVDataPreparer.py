@@ -7,9 +7,13 @@ import pytz
 class CSVDataPreparer(object):
 
     def __init__(self, csv_dir, csv_symbols=None):
-        self.csv_dir = csv_dir
-        self.csv_symbols = csv_symbols
-        self.asset_dfs = self._load_csvs_into_dfs()
+        self.__csv_dir = csv_dir
+        self.__csv_symbols = csv_symbols if isinstance(csv_symbols, list) else [csv_symbols]
+        self.__asset_dfs = self._load_csvs_into_dfs()
+
+    @property
+    def asset_dfs(self):
+        return self.__asset_dfs
 
     def _get_all_asset_csv_filenames(self):
         """
@@ -18,7 +22,7 @@ class CSVDataPreparer(object):
         Returns:
             list: list of all CSV filenames
         """
-        filenames = os.listdir(self.csv_dir)
+        filenames = os.listdir(self.__csv_dir)
         return [filename for filename in filenames if filename.endswith(".csv")]
 
     def _get_asset_symbol_from_filename(self, csv_filename):
@@ -33,7 +37,7 @@ class CSVDataPreparer(object):
         """
         return csv_filename.replace(".csv", "")
 
-    def _format_csv_into_df(self, csv_filename):#
+    def _format_csv_into_df(self, csv_filename):
         """
         Loads a CSV file from directory and converts it into a pd DataFrame.
 
@@ -45,7 +49,7 @@ class CSVDataPreparer(object):
         """
 
         csv_df = pd.read_csv(
-            os.path.join(self.csv_dir, csv_filename),
+            os.path.join(self.__csv_dir, csv_filename),
             index_col='Date',
             parse_dates=True
         ).sort_index()
@@ -63,14 +67,17 @@ class CSVDataPreparer(object):
         """
         
         csv_filenames = []
-        if self.csv_symbols is not None:
-            for symbol in self.csv_symbols:
-                csv_filenames.append(symbol+".csv")
+
+        if self.__csv_symbols is not None:
+            for symbol in self.__csv_symbols:
+                if '.csv' not in symbol:
+                    csv_filenames.append(symbol+".csv")
+                else:
+                    csv_filenames.append(symbol)
         else:
             csv_filenames = self._get_all_asset_csv_filenames()
 
         asset_symbols = {}
-
         for csv_filename in csv_filenames:
             asset_symbol = self._get_asset_symbol_from_filename(csv_filename)
             csv_df = self._format_csv_into_df(csv_filename)
@@ -78,7 +85,7 @@ class CSVDataPreparer(object):
 
         return asset_symbols
 
-    def get_assets_historic_data(self, start_dt, end_dt, assets, type="Close"): 
+    def get_assets_historic_data(self, start_dt, end_dt, assets, col='Close'): 
         """
         Gets all historic data of given assests.
 
@@ -91,14 +98,14 @@ class CSVDataPreparer(object):
         Returns:
             pd DataFrame: pd DataFrame containing all historic data
         """
-        close_list = []
+        col_list = []
         for asset in assets:
-            if asset in self.csv_symbols: # does asset exist in data?
-                entry_df = self.asset_dfs[asset]['Close'] # get closes
-                close_list.append(entry_df)
-        close_df = pd.concat(close_list, axis=1).dropna(
+            if asset in self.__csv_symbols: # does asset exist in data?
+                entry_df = self.__asset_dfs[asset] # get closes
+                col_list.append(entry_df)
+        df = pd.concat(col_list, axis=1).dropna(
             how='all')  # convert into DataFrame & drop NA
-        close_df = close_df.loc[start_dt:end_dt] # only close prices from start to end dates
-        close_df.columns = assets # set symbol as column names
-        return close_df
+        df = df.loc[start_dt:end_dt] # only close prices from start to end dates
+        #df.columns = assets # set symbol as column names
+        return df
     

@@ -27,6 +27,8 @@ class Equity(object):
         Creates a column in MasterDataFrame which contains the current capital
         """
         equity_df = pd.DataFrame(index=self.__master_df.index)
+        print("equity_df")
+        print(self.__master_df)
         equity_df['Equity'] = np.nan
         equity_df['Equity %'] = np.nan
         old_capital = self.__start_capital
@@ -42,7 +44,6 @@ class Equity(object):
             old_capital = new_capital
         
         
-
         equity_df['Equity'][0] = self.__start_capital
         equity_df['Equity %'][0] = 1
 
@@ -56,9 +57,11 @@ class Equity(object):
 
         # Profit & Loss between Rows
         equity_df['Profit/Loss'] = equity_df['Equity'].diff()
-        equity_df['Profit/Loss'][0] = 0
+        equity_df['Profit/Loss'] = 0
         equity_df['Profit/Loss %'] = equity_df['Equity %'].diff()
-        equity_df['Profit/Loss'][0] = 0
+        equity_df['Profit/Loss'] = 0
+
+        
 
         return equity_df
 
@@ -75,6 +78,7 @@ class Equity(object):
         Returns:
             float: new capital after trade
         """
+
         factor = current_row['Position'] # Long: -1, Short: +1
         new_capital = old_capital - factor * \
             (current_row['Close'] * self.__size -
