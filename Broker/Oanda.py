@@ -1,5 +1,6 @@
 from Broker import Broker
 import os
+import json
 from dateutil.relativedelta import relativedelta
 import time
 import requests
@@ -8,6 +9,7 @@ from oandapyV20.contrib.requests import StopOrderRequest, StopLossOrderRequest
 from oandapyV20.contrib.requests import MarketOrderRequest
 from oandapyV20 import oandapyV20
 import oandapyV20.endpoints.orders as orders
+import oandapyV20.endpoints.accounts as accounts
 
 #TODO Place Stoploss
 
@@ -148,5 +150,33 @@ class Oanda(Broker):
             hist_df["Minute"] = hist_df.index.minute
             hist_df.reset_index(drop=True, inplace=True)
             return hist_df
+        
+        def getInstrumentsList(self):
+            """Get all possible instruments
+
+
+            Returns:
+                Instrument-list
+            """
+            params = {"instruments": None}
+            r = accounts.AccountInstruments(accountID= self.ACCOUNT_ID, params=params)
+            API = oandapyV20.API(access_token=self.ACCESS_TOKEN, environment=self.ENV)
+            instruments = []
+            try:
+                rv = API.request(r)
+            except oandapyV20.exceptions.V20Error as err:
+                print("Error:", r.status_code, err)
+            else:
+                print("The result:")
+                res = json.dumps(rv, indent=2)
+                result = json.loads(res)
+                for instrument in result['instruments']:
+                    print(instrument["displayName"])
+                    #if (instrument['type'] == type):
+                    instruments.append([instrument['name'], instrument['displayName']])
+            instrument_pd = pd.DataFrame(instruments, columns=["Name", "Details"])
+
+            print(instrument_pd)
+            return instrument_pd
         
       
