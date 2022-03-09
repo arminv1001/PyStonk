@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-# CLOSE PRICE = __SYMBOL ÄNDERN
-
 class Equity(object):
 
     def __init__(self, symbol, df, start_capital, comission, size=1):
@@ -19,7 +17,7 @@ class Equity(object):
         self.__equity_df = self.create_equity()
 
     @property
-    def equity_df(self):
+    def dataframe(self):
         return self.__equity_df
 
     def create_equity(self):
@@ -27,8 +25,6 @@ class Equity(object):
         Creates a column in MasterDataFrame which contains the current capital
         """
         equity_df = pd.DataFrame(index=self.__master_df.index)
-        print("equity_df")
-        print(self.__master_df)
         equity_df['Equity'] = np.nan
         equity_df['Equity %'] = np.nan
         old_capital = self.__start_capital
@@ -42,7 +38,6 @@ class Equity(object):
             equity_df.loc[index, 'Equity %'] = new_capital / \
                 old_capital  # set new capital in cell
             old_capital = new_capital
-        
         
         equity_df['Equity'][0] = self.__start_capital
         equity_df['Equity %'][0] = 1
