@@ -189,6 +189,11 @@ class PerformanceMeasurement(object):
         alpha = self.__return_s.mean() - beta * self.__return_b.mean()
         return beta, alpha
 
+    def calculate_hhi(self, returns):
+        
+        weight = returns/returns.sum()
+        w_sum_p2 = (weight**2).sum()
+        return (w_sum_p2 - len(returns)**-1)/(1-len(returns)**-1)
 
 
 

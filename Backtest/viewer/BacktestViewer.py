@@ -90,8 +90,8 @@ def view_spreadsheet(spreadsheet):
     all_trades_col, dd_col = st.columns(2)
     all_trades_col.subheader('All Trades')
     all_trades_col.dataframe(spreadsheet.all_trades_info)
-    dd_col.subheader('Drawdowns')
-    dd_col.dataframe(spreadsheet.drawdowns_info)
+    dd_col.subheader('Runs')
+    dd_col.dataframe(spreadsheet.runs_info)
 
     winner_col, loser_col = st.columns(2)
     winner_col.subheader('Winners')

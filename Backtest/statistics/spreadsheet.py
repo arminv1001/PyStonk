@@ -40,7 +40,7 @@ class SpreadSheet(object):
 
         self.__drawdown = drawdown
         
-        self.__drawdowns_info = self.__create_drawdown_info()
+        
 
         self.__performance_measurement = PerformanceMeasurement(
             self.__master_df[['Equity', 'Equity %']],
@@ -52,6 +52,8 @@ class SpreadSheet(object):
         )
 
         self.__performance_info = self.__create_performance_info()
+
+        self.__runs_info = self.__create_runs_info()
 
     
     @property
@@ -87,8 +89,8 @@ class SpreadSheet(object):
         return self.__drawdowns
 
     @property
-    def drawdowns_info(self):
-        return self.__drawdowns_info
+    def runs_info(self):
+        return self.__runs_info
 
 
     def get_info_df(self):
@@ -104,7 +106,7 @@ class SpreadSheet(object):
             self.__all_trades_info,
             self.__winners,
             self.__losers,
-            self.__drawdowns_info
+            self.__runs_info
         ]
         info_df = pd.concat(frames)
 
@@ -245,9 +247,18 @@ class SpreadSheet(object):
         losers = losers.rename(columns={0: "Data"})
         return losers
 
-    def __create_drawdown_info(self):
+    def __create_runs_info(self):
+
+        trade_history = self.__trade_history_s
+
+        hhi_positive = self.__performance_measurement.calculate_hhi(
+            trade_history['Return %'][trade_history['Return'] > 0])
+        hhi_negative = self.__performance_measurement.calculate_hhi(
+            trade_history['Return %'][trade_history['Return'] < 0])
         
         data = {
+            'HHI on + Returns': hhi_positive,
+            'HHI on - Returns': hhi_negative,
             'Max. Drawdown': max(self.__drawdown.df),
             'Max. Drawdown %': max(self.__drawdown.df_pct),
             'Max. Drawdown Duration (bars)': self.__drawdown.max_duration_bars,
