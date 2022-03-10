@@ -3,6 +3,7 @@ from equity.Equity import *
 from statistics.SpreadSheet import *
 from strategy.strategy1 import *
 from tools.toolbox import *
+from trade_history.TradeHistory import *
 
 import yfinance as yf
 import matplotlib.pyplot as plt
@@ -255,6 +256,9 @@ def create_backtest(view_settings_dict):
     benchmark_symbol = view_settings_dict['benchmark']
     start = view_settings_dict['start_date_time']
     end = view_settings_dict['end_date_time']
+    periodicity = view_settings_dict['periodicity']
+    size = view_settings_dict['size']
+    rfr = 0
 
     master_df_s = get_master_df(
         symbol, start, end, view_settings_dict['data_source_s'])
@@ -270,17 +274,29 @@ def create_backtest(view_settings_dict):
     equity_b = Equity(
         view_settings_dict['symbols'], master_df_b, view_settings_dict['start_capital'], view_settings_dict['comission'], view_settings_dict['size'])
     
-    eq_s = equity_s.dataframe
-    eq_b = equity_b.dataframe
+    eq_s = equity_s.df
+    eq_b = equity_b.df
 
     master_df_s = pd.concat([master_df_s, eq_s], axis=1)
     master_df_b = pd.concat([master_df_b, eq_b], axis=1)
 
-    trade_history_b = create_trade_history_df(master_df_b)
+    trade_history_s = TradeHistory(master_df_s[['Equity', 'Equity %', 'Position', 'Size']], size)
+    trade_history_b = TradeHistory(master_df_b[['Equity', 'Equity %', 'Position', 'Size']], size)
+
     drawdown = Drawdown(master_df_s[['Equity', 'Equity %']])
 
+    # extract out of class
+    performance_measurement = PerformanceMeasurement(
+        master_df_s[['Equity', 'Equity %']],
+        master_df_b[['Equity', 'Equity %']],
+        trade_history_s.df,
+        trade_history_b.df,
+        periodicity,
+        rfr
+    )
+
     spreadsheet = SpreadSheet(
-        master_df_s, master_df_b, drawdown, view_settings_dict['start_capital'], view_settings_dict['size'], view_settings_dict['comission'], view_settings_dict['periodicity'])
+        master_df_s, trade_history_s.df, performance_measurement, drawdown, view_settings_dict['start_capital'], view_settings_dict['comission'], view_settings_dict['periodicity'])
         
     return master_df_s, spreadsheet, drawdown.complete_df
 
