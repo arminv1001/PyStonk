@@ -1,11 +1,5 @@
-from data_prep.CSVDataPreparer import *
-from equity.Equity import *
-from statistics.SpreadSheet import *
-from strategy.strategy1 import *
-from tools.toolbox import *
-from trade_history.TradeHistory import *
+from controller.BacktestController import *
 
-import yfinance as yf
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
@@ -27,13 +21,18 @@ def run_backtest_viewer():
 
     run = st.button('Run')
 
-    master_df, spreadsheet, drawdowns_df = create_backtest(
-        bt_settings_dict)
+    controller = BacktestController(bt_settings_dict)
+    master_df = controller.master_df
+    spreadsheet = controller.spreadsheet
+    drawdown_df = controller.drawdown_df
+
+    print(42)
+    print(drawdown_df)
 
     view_dashboard(bt_settings_dict, master_df)
     view_trade_history(spreadsheet.trade_history_s)
     view_equity(master_df[['Equity', 'Equity %']])
-    view_drawdown(drawdowns_df)
+    view_drawdown(drawdown_df)
     view_spreadsheet(spreadsheet)
 
 
@@ -233,6 +232,7 @@ def view_sidebar_settings():
     start_capital = st.sidebar.number_input('Start Capital')
     size = st.sidebar.number_input('Size')
     comission = st.sidebar.number_input('Comission')
+    rfr = st.sidebar.number_input('Risk-Free Rate') / 100 # in %
 
     bt_settings_dict = {
         'strategy': strategy,
@@ -245,72 +245,9 @@ def view_sidebar_settings():
         'periodicity': periodicity,
         'start_capital': start_capital,
         'size': size,
-        'comission': comission
+        'comission': comission,
+        'risk-free rate': rfr
     }
 
     return bt_settings_dict
 
-def create_backtest(view_settings_dict):
-    # TO-DO: Data Retrieval Func
-    symbol = view_settings_dict['symbols']
-    benchmark_symbol = view_settings_dict['benchmark']
-    start = view_settings_dict['start_date_time']
-    end = view_settings_dict['end_date_time']
-    periodicity = view_settings_dict['periodicity']
-    size = view_settings_dict['size']
-    rfr = 0
-
-    master_df_s = get_master_df(
-        symbol, start, end, view_settings_dict['data_source_s'])
-    master_df_b = get_master_df(
-        benchmark_symbol, start, end, view_settings_dict['data_source_b'])
-
-    master_df_s = run_strategy(master_df_s)
-    master_df_b = run_strategy(master_df_b)
-
-    equity_s = Equity(
-        view_settings_dict['symbols'], master_df_s, view_settings_dict['start_capital'], view_settings_dict['comission'], view_settings_dict['size'])
-
-    equity_b = Equity(
-        view_settings_dict['symbols'], master_df_b, view_settings_dict['start_capital'], view_settings_dict['comission'], view_settings_dict['size'])
-    
-    eq_s = equity_s.df
-    eq_b = equity_b.df
-
-    master_df_s = pd.concat([master_df_s, eq_s], axis=1)
-    master_df_b = pd.concat([master_df_b, eq_b], axis=1)
-
-    trade_history_s = TradeHistory(master_df_s[['Equity', 'Equity %', 'Position', 'Size']], size)
-    trade_history_b = TradeHistory(master_df_b[['Equity', 'Equity %', 'Position', 'Size']], size)
-
-    drawdown = Drawdown(master_df_s[['Equity', 'Equity %']])
-
-    # extract out of class
-    performance_measurement = PerformanceMeasurement(
-        master_df_s[['Equity', 'Equity %']],
-        master_df_b[['Equity', 'Equity %']],
-        trade_history_s.df,
-        trade_history_b.df,
-        periodicity,
-        rfr
-    )
-
-    spreadsheet = SpreadSheet(
-        master_df_s, trade_history_s.df, performance_measurement, drawdown, view_settings_dict['start_capital'], view_settings_dict['comission'], view_settings_dict['periodicity'])
-        
-    return master_df_s, spreadsheet, drawdown.complete_df
-
-def get_master_df(symbol, start_date, end_date, source):
-
-    if source == 'Yahoo Finance':
-        master = yf.Ticker(symbol[0])
-        master_df = master.history(start_date, end_date)
-
-    elif source == 'Source Folder':
-        csvDP = CSVDataPreparer(csv_symbols=symbol)
-        master_df = csvDP.get_assets_historic_data(start_date, end_date, symbol)
-
-    return master_df
-
-
-    
