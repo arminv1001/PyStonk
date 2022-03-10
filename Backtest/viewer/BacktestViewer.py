@@ -1,8 +1,4 @@
-from data_prep.CSVDataPreparer import *
-from equity.Equity import *
-from statistics.SpreadSheet import *
-from strategy.strategy1 import *
-from tools.toolbox import *
+from controller.BacktestController import *
 
 import matplotlib.pyplot as plt
 import plotly.express as px
@@ -11,6 +7,9 @@ from plotly.subplots import make_subplots
 import numpy as np
 import streamlit as st
 import os
+import datetime
+
+
 
 
 
@@ -22,13 +21,18 @@ def run_backtest_viewer():
 
     run = st.button('Run')
 
-    master_df, spreadsheet, trade_history_df, drawdowns_df = create_backtest(
-        bt_settings_dict)
+    controller = BacktestController(bt_settings_dict)
+    master_df = controller.master_df
+    spreadsheet = controller.spreadsheet
+    drawdown_df = controller.drawdown_df
+
+    print(42)
+    print(drawdown_df)
 
     view_dashboard(bt_settings_dict, master_df)
-    view_trade_history(trade_history_df)
+    view_trade_history(spreadsheet.trade_history_s)
     view_equity(master_df[['Equity', 'Equity %']])
-    view_drawdown(drawdowns_df)
+    view_drawdown(drawdown_df)
     view_spreadsheet(spreadsheet)
 
 
@@ -36,7 +40,9 @@ def view_trade_history(trade_history_df):
         st.header('Trade History')
         st.dataframe(trade_history_df, 1100, 200)
 
+
 def view_equity(equity_df):
+    # TO-DO: Equity Drawdown direkt untereinander
     st.header('Equity')
     equity_rad = st.radio('', ['absolute', 'percentage %'], key="<equity_rad>")
 
@@ -52,6 +58,7 @@ def view_equity(equity_df):
     fig.layout.update(title_text='Equity',
                         xaxis_rangeslider_visible=True)
     st.plotly_chart(fig)
+
 
 def view_drawdown(drawdown_df):
     st.header('Drawdown')
@@ -70,19 +77,21 @@ def view_drawdown(drawdown_df):
 
 
 def view_spreadsheet(spreadsheet):
+
     st.header('SpreadSheet')
     
     gen_info_col, perf_col = st.columns(2)
     gen_info_col.subheader('General Information')
     perf_col.subheader('Performance')
     gen_info_col.dataframe(spreadsheet.general_info)
+    
     perf_col.dataframe(spreadsheet.performance_info)
 
     all_trades_col, dd_col = st.columns(2)
     all_trades_col.subheader('All Trades')
     all_trades_col.dataframe(spreadsheet.all_trades_info)
-    dd_col.subheader('Drawdowns')
-    dd_col.dataframe(spreadsheet.drawdowns_info)
+    dd_col.subheader('Runs')
+    dd_col.dataframe(spreadsheet.runs_info)
 
     winner_col, loser_col = st.columns(2)
     winner_col.subheader('Winners')
@@ -183,23 +192,31 @@ def view_dashboard(bt_settings_dict, master_df):
 def view_sidebar_settings():
 
     strategy_list = get_filenames_from('strategy')
-    benchmark_list = get_filenames_from('benchmark')
-    symbols_list = get_filenames_from('backtest_data')
+    data_list = get_filenames_from('backtest_data')
 
     # General
     st.sidebar.header('General')
     strategy = st.sidebar.selectbox(
         'Choose your strategy', strategy_list)
-    symbols_csv = st.sidebar.multiselect('Symbol', symbols_list)
-    symbols = [symbol.replace('.csv', '') for symbol in symbols_csv]
-    benchmark = st.sidebar.selectbox('Benchmark', benchmark_list)
+    source_list = ['Source Folder', 'Yahoo Finance']
+    data_source_s = st.sidebar.selectbox(
+        'Select your data source', source_list, key="<symbol>")
+    
 
-    # Trading Seetings
-    # TO-DO: for different time periods
-    st.sidebar.header('Trading Settings')
-    et = ['Current Day Close Price', 'Next Day Close Price']
-    buy_ex_type = st.sidebar.selectbox('Buy Execution Type', et, key = "<buy_ex_type>")
-    sell_ex_type = st.sidebar.selectbox('Sell Execution Type', et, key = "<sell_ex_type>")
+    if data_source_s == 'Yahoo Finance':
+        symbols = st.sidebar.text_input('Symbol')
+    elif data_source_s == 'Source Folder':
+        symbols_csv = st.sidebar.multiselect('Symbol', data_list)
+        symbols = [symbol.replace('.csv', '') for symbol in symbols_csv]
+
+    data_source_b = st.sidebar.selectbox(
+        'Select your data source', source_list, key="<benchmark>")
+
+    if data_source_b == 'Yahoo Finance':
+        benchmark = st.sidebar.text_input('Symbol')
+    elif data_source_b == 'Source Folder':
+        benchmark_csv = st.sidebar.multiselect('Benchmark', data_list)
+        benchmark = [symbol.replace('.csv', '') for symbol in benchmark_csv]
 
     # Date & Time
     st.sidebar.header('Date & Time')
@@ -207,6 +224,7 @@ def view_sidebar_settings():
     start_time = st.sidebar.time_input('Start Time')
     end_date = st.sidebar.date_input('End Date')
     end_time = st.sidebar.time_input('End Time')
+
     periodicity = st.sidebar.select_slider('Periodicity', ['Secondly', 'Minutely', 'Hourly', 'Daily'])
 
     # Cash & Co
@@ -214,48 +232,22 @@ def view_sidebar_settings():
     start_capital = st.sidebar.number_input('Start Capital')
     size = st.sidebar.number_input('Size')
     comission = st.sidebar.number_input('Comission')
+    rfr = st.sidebar.number_input('Risk-Free Rate') / 100 # in %
 
     bt_settings_dict = {
         'strategy': strategy,
+        'data_source_s': data_source_s,
+        'data_source_b': data_source_b,
         'symbols': symbols,
         'benchmark': benchmark,
-        'start_date': start_date,
-        'start_time': start_time,
-        'end_date': end_date,
-        'end_time': end_time,
+        'start_date_time': start_date if periodicity == 'Daily' else datetime.datetime.combine(start_date, start_time),
+        'end_date_time': end_date if periodicity == 'Daily' else datetime.datetime.combine(end_date, end_time),
         'periodicity': periodicity,
         'start_capital': start_capital,
         'size': size,
-        'comission': comission
+        'comission': comission,
+        'risk-free rate': rfr
     }
 
     return bt_settings_dict
 
-def create_backtest(view_settings_dict):
-    master_df = run_strategy(
-        view_settings_dict['symbols'], view_settings_dict['start_date'], view_settings_dict['end_date'])
-
-    equity = Equity(
-        view_settings_dict['symbols'], master_df, view_settings_dict['start_capital'], view_settings_dict['comission'], view_settings_dict['size'])
-    eq = equity.equity_df
-
-    master_df = pd.concat([master_df, eq], axis=1)
-
-    spreadsheet = SpreadSheet(
-        master_df, view_settings_dict['start_capital'], view_settings_dict['size'], view_settings_dict['comission'], view_settings_dict['periodicity'])
-
-    #spreadsheet_df = spreadsheet.get_info_df()
-    #spreadsheet_df = spreadsheet_df
-
-    trade_history_df = spreadsheet.trade_history
-    trade_history_df = trade_history_df
-
-    drawdowns_df = spreadsheet.drawdowns
-    drawdowns_df = drawdowns_df
-
-    return master_df, spreadsheet, trade_history_df, drawdowns_df
-
-
-
-
-    

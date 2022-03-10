@@ -5,37 +5,41 @@ import os
 PATH = '/Users/mr.kjn/Projects/PyStonk/Backtest/'
 
 
-
-def get_long_short_dates(master_df):
+def get_consecutive(trade_history, of_wins=True):
     """
-    Return list of long, short dates and of excess dates
+    Returns the value of the longest consecutive of winners/losers
+
+    Args:
+
+        of_wins (bool, optional): winners or losers. Defaults to True.
 
     Returns:
-        np.array: array of long, short & excess dates 
+        float: consecutive
     """
-    long_dates = np.array(master_df[master_df == 1].index)
-    short_dates = np.array(master_df[master_df == -1].index)
 
-    long_dates_list = None
-    short_dates_list = None
-    excess_dates = None
+    consecutive = 0
+    longest_run = 0
+    for ret in trade_history:
 
-    # clear excess dates
-    if len(short_dates) < len(long_dates):
-        excess = len(long_dates) - len(short_dates)
-        long_dates_list = delete_list_by_index(long_dates, excess)
-        excess_dates = long_dates[len(long_dates)-excess:]
-        short_dates_list = short_dates
-    elif len(long_dates) < len(short_dates):
-        excess = len(short_dates) - len(long_dates)
-        short_dates_list = delete_list_by_index(short_dates, excess)
-        excess_dates = short_dates[len(short_dates)-excess:]
-        long_dates_list = long_dates
-    else:
-        long_dates_list = long_dates
-        short_dates_list = short_dates
+        # winner trades
+        if of_wins:
+            if ret > 0:
+                consecutive = consecutive + 1
+            else:
+                consecutive = 0
+                if consecutive > longest_run:
+                    longest_run = consecutive
+        # loser trades
+        else:
+            if ret < 0:
+                consecutive = consecutive + 1
+            else:
+                consecutive = 0
+                if consecutive > longest_run:
+                    longest_run = consecutive
 
-    return long_dates_list, short_dates_list, excess_dates
+    return longest_run
+
 
 def delete_list_by_index(del_list, excess):
     """
@@ -82,3 +86,6 @@ def get_number_of_weeknds(long_dates, short_dates):
         num_weeknds.append(len(get_weeknd(long_dates[i], short_days[i])))
     
     return num_weeknds
+
+
+

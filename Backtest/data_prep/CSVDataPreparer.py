@@ -3,11 +3,12 @@ import numpy as np
 import pandas as pd
 import pytz
 
+CSV_DIR = '/Users/mr.kjn/Projects/PyStonk/Backtest/backtest_data'
 
 class CSVDataPreparer(object):
 
-    def __init__(self, csv_dir, csv_symbols=None):
-        self.__csv_dir = csv_dir
+    def __init__(self, csv_symbols=None):
+        self.__csv_dir = CSV_DIR
         self.__csv_symbols = csv_symbols if isinstance(csv_symbols, list) else [csv_symbols]
         self.__asset_dfs = self._load_csvs_into_dfs()
 
@@ -85,7 +86,7 @@ class CSVDataPreparer(object):
 
         return asset_symbols
 
-    def get_assets_historic_data(self, start_dt, end_dt, assets, col='Close'): 
+    def get_assets_historic_data(self, start_dt, end_dt, assets): 
         """
         Gets all historic data of given assests.
 
@@ -100,8 +101,8 @@ class CSVDataPreparer(object):
         """
         col_list = []
         for asset in assets:
-            if asset in self.__csv_symbols: # does asset exist in data?
-                entry_df = self.__asset_dfs[asset] # get closes
+            if asset in self.__csv_symbols: 
+                entry_df = self.__asset_dfs[asset]
                 col_list.append(entry_df)
         df = pd.concat(col_list, axis=1).dropna(
             how='all')  # convert into DataFrame & drop NA
