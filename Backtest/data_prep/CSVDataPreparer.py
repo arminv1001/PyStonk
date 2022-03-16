@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytz
 
-CSV_DIR = '/Users/mr.kjn/Projects/PyStonk/Backtest/backtest_data'
+CSV_DIR = os.path.join(os.path.abspath(os.curdir),"Backtest/backtest_data")
 
 class CSVDataPreparer(object):
 

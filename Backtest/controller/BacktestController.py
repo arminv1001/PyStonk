@@ -4,7 +4,7 @@ import yfinance as yf
 
 from data_prep.CSVDataPreparer import *
 from equity.Equity import *
-from statistics.SpreadSheet import *
+from statistics.spreadsheet import *
 from tools.toolbox import *
 from trade_history.TradeHistory import *
 from strategy.strategy1 import *

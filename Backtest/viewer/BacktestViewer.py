@@ -190,7 +190,7 @@ def view_dashboard(bt_settings_dict, master_df):
 
 
 def view_sidebar_settings():
-
+    
     strategy_list = get_filenames_from('strategy')
     data_list = get_filenames_from('backtest_data')
 

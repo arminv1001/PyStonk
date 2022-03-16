@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import os
 
-PATH = '/Users/mr.kjn/Projects/PyStonk/Backtest/'
+PATH = os.path.abspath(os.curdir)
+
 
 
 def get_consecutive(trade_history, of_wins=True):
@@ -66,6 +67,7 @@ def get_filenames_from(folder, ending=''):
     Returns:
         list: list of all CSV filenames
     """
+    folder = "Backtest/" + folder
     path = os.path.join(PATH, folder)
     filenames = os.listdir(path)
     return [filename for filename in filenames if filename.endswith(ending)]

@@ -2,7 +2,7 @@ import sys
 from data_prep.CSVDataPreparer import *
 from RSI import *
 from equity.Equity import *
-from statistics.SpreadSheet import *
+from statistics.spreadsheet import *
 from viewer.BacktestViewer import *
 import matplotlib.pyplot as plt
 import plotly.express as px
