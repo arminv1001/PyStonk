@@ -26,8 +26,7 @@ def run_backtest_viewer():
 
     view_dashboard(bt_settings_dict, master_df)
     view_trade_history(spreadsheet.trade_history)
-    view_charts(equity_df[['Equity', 'Equity %']],
-                drawdown_df, master_df['Position'])
+    view_charts(equity_df, drawdown_df, master_df['Position'])
     view_spreadsheet(spreadsheet)
 
 
@@ -47,7 +46,8 @@ def view_charts(equity_df, drawdown_df, position_df):
     view_drawdown(drawdown_df, position_df)
     
 def view_equity(equity_df, position_df):
-    equity_rad = st.radio('', ['absolute', 'percentage %'], key="<equity_rad>")
+    equity_rad = st.radio(
+        '', ['percentage %', 'absolute', ], key="<equity_rad>")
 
     if equity_rad == 'absolute':
         equity_data = equity_df['Equity'][position_df < 0]
@@ -55,9 +55,24 @@ def view_equity(equity_df, position_df):
     elif equity_rad == 'percentage %':
         equity_data = equity_df['Equity %'][position_df < 0]
 
+    benchmark_data = equity_df['Benchmark'][position_df < 0]
+
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(x=equity_data.index, y=equity_data))
+    fig.add_trace(go.Scatter(
+        x=equity_data.index, 
+        y=equity_data,
+        name='Equity'
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=equity_data.index,
+            y=benchmark_data,
+            name='Benchmark Performance'
+        )
+    )
 
     fig.layout.update(title_text='Equity',
                         xaxis_rangeslider_visible=True)

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from datetime import datetime, timedelta
 
 
 class Drawdown(object):
@@ -71,8 +72,8 @@ class Drawdown(object):
 
     def __calculate_durations(self):
 
-        dd_durations = []
-        dd_durations_bars = []
+        dd_durations = [timedelta()]
+        dd_durations_bars = [0]
 
         for i in range(len(self.__hwm_dates)):
             if i < len(self.__hwm_dates)-1:

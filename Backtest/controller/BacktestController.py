@@ -43,7 +43,7 @@ class BacktestController(object):
 
     @property
     def equity_df(self):
-        return self.__equity_s.df
+        return self.__equity_df
 
     def __set_all(self):
         self.__set_master_dfs()
@@ -86,6 +86,10 @@ class BacktestController(object):
             self.__start_capital,
             self.__comission,
             self.__size)
+
+        self.__equity_df = self.__equity_s.df
+        self.__equity_df['Benchmark'] = self.__equity_s.df['Equity %'] - self.__equity_b.df['Equity %']
+        print(self.__equity_df)
 
         
     def __set_trade_histories(self):
