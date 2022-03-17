@@ -63,10 +63,10 @@ class BacktestController(object):
             self.__data_source_s)
 
         self.__master_df_b = self.__get_data_df(
-            self.__symbol,
+            self.__benchmark_symbol,
             self.__start_date_time,
             self.__end_date_time,
-            self.__data_source_s)
+            self.__date_source_b)
 
         self.__master_df_s = run_strategy(self.__master_df_s)
         self.__master_df_b = run_strategy(self.__master_df_b)
@@ -81,7 +81,7 @@ class BacktestController(object):
             self.__size)
 
         self.__equity_b = Equity(
-            self.__symbol,
+            self.__benchmark_symbol,
             self.__master_df_b,
             self.__start_capital,
             self.__comission,

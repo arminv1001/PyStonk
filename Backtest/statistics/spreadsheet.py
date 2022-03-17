@@ -135,7 +135,7 @@ class SpreadSheet(object):
 
         trade_history = self.__trade_history
         exposure = sum(trade_history['Bars Held']) / \
-            len(self.__master_df.index)  # Time Exposure
+            len(self.__master_df.index) * 100  # Time Exposure
         sharpe = self.__performance_measurement.calculate_sharpe_ratio()
         sortino = self.__performance_measurement.calculate_sortino_ratio()
         rap, rm = self.__performance_measurement.calculate_mm_ratio()
@@ -253,7 +253,8 @@ class SpreadSheet(object):
             )
             avg_bars_held = float(
                 'NaN') if loser_bars.empty else int(loser_bars.mean())
-            max_consecutive = get_consecutive(trade_history['Return'])
+            max_consecutive = get_consecutive(
+                trade_history['Return'], of_wins=False)
             largest_loss = trade_history['Return'][trade_history['Return'] < 0].max()
             bars_in_largest_loss = trade_history['Bars Held'][trade_history['Return'] == largest_loss].iloc[0]
 
@@ -278,13 +279,15 @@ class SpreadSheet(object):
             trade_history['Return %'][trade_history['Return'] > 0])
         hhi_negative = self.__performance_measurement.calculate_hhi(
             trade_history['Return %'][trade_history['Return'] < 0])
+        max_dd_pct = min(self.__drawdown.df_pct)
+        max_dd_duration = self.__drawdown.max_duration_bars
         
         data = {
             'HHI on + Returns': hhi_positive,
             'HHI on - Returns': hhi_negative,
-            'Max. Drawdown': max(self.__drawdown.df),
-            'Max. Drawdown %': max(self.__drawdown.df_pct),
-            'Max. Drawdown Duration (bars)': self.__drawdown.max_duration_bars,
+            #'Max. Drawdown': max(self.__drawdown.df),
+            'Max. Drawdown %': max_dd_pct,
+            'Max. Drawdown Duration (bars)': max_dd_duration
         }
         dd = pd.DataFrame.from_dict(data, orient='index')
         dd = dd.rename(columns={0: "Data"})

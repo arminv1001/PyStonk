@@ -37,9 +37,12 @@ class PerformanceMeasurement(object):
         """
         periods = PERIODS[period]
 
-        d = self.__return_s - self.__return_b
+        return_s, return_b, excess_list = get_equal_len_list(
+            self.__return_s, self.__return_b)
+        
+        d = return_s - return_b
 
-        return np.sqrt(periods) * ((np.mean(d)) / np.std(self.__return_s))
+        return np.sqrt(periods) * ((np.mean(d)) / np.std(return_s))
 
     def calculate_sortino_ratio(self, period="Annually"):
         """
@@ -54,11 +57,15 @@ class PerformanceMeasurement(object):
         """
 
         periods = PERIODS[period]
-        d = self.__return_s - self.__return_b
+        
+        return_s, return_b, excess_list = get_equal_len_list(
+            self.__return_s, self.__return_b)
+
+        d = return_s - return_b
 
         rfr = 0  # risk-free rate
 
-        return np.sqrt(periods) * ((np.mean(d)) / np.std(self.__return_s[self.__return_s < 0]))
+        return np.sqrt(periods) * ((np.mean(d)) / np.std(return_s[return_s < 0]))
 
     def calculate_mm_ratio(self, period="Annually"):
         """
@@ -74,9 +81,12 @@ class PerformanceMeasurement(object):
 
         periods = PERIODS[period]
 
-        d_s = np.mean(self.__return_s - self.__rfr)
-        d_b = np.mean(self.__return_b - self.__rfr)
-        fraq = np.std(self.__return_s) / np.std(self.__return_b)
+        return_s, return_b, excess_list = get_equal_len_list(
+            self.__return_s, self.__return_b)
+
+        d_s = np.mean(return_s) - self.__rfr
+        d_b = np.mean(return_b) - self.__rfr
+        fraq = np.std(return_s) / np.std(return_b)
 
         rap = np.sqrt(periods) * fraq * d_s + self.__rfr
         rm = np.sqrt(periods) * fraq * d_b + self.__rfr
@@ -180,11 +190,14 @@ class PerformanceMeasurement(object):
             float: alpha, beta
         """
 
-        numerator = np.cov(self.__return_s.astype(
-            float), self.__return_b.astype(float))
-        denumerator = np.var(self.__return_b)
+        return_s, return_b, excess_list = get_equal_len_list(
+            self.__return_s, self.__return_b)
+
+        numerator = np.cov(return_s.astype(
+            float), return_b.astype(float))
+        denumerator = np.var(return_b)
         beta = numerator[0][0] / denumerator
-        alpha = self.__return_s.mean() - beta * self.__return_b.mean()
+        alpha = return_s.mean() - beta * return_b.mean()
         return beta, alpha
 
     def calculate_hhi(self, returns):

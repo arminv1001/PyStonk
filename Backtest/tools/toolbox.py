@@ -25,25 +25,43 @@ def get_consecutive(trade_history, of_wins=True):
     consecutive = 0
     longest_run = 0
     for ret in trade_history:
-
         # winner trades
         if of_wins:
             if ret > 0:
-                consecutive = consecutive + 1
-            else:
-                consecutive = 0
+                consecutive += 1
+            elif ret < 0:
                 if consecutive > longest_run:
                     longest_run = consecutive
+                consecutive = 0
         # loser trades
         else:
             if ret < 0:
-                consecutive = consecutive + 1
+                consecutive += 1
             else:
-                consecutive = 0
                 if consecutive > longest_run:
                     longest_run = consecutive
+                consecutive = 0
 
     return longest_run
+
+
+def get_equal_len_list(list1, list2):
+
+        if len(list1) < len(list2):
+            excess = len(list2) - len(list1)
+            list2_list = delete_list_by_index(list2, excess)
+            excess_list = list2[len(list2)-excess:]
+            list1_list = list1
+        elif len(list2) < len(list1):
+            excess = len(list1) - len(list2)
+            list1_list = delete_list_by_index(list1, excess)
+            excess_list = list1[len(list1)-excess:]
+            list2_list = list2
+        else:
+            list2_list = list2
+            list1_list = list1
+
+        return list2_list, list1_list, excess_list
 
 
 def delete_list_by_index(del_list, excess):
@@ -62,7 +80,7 @@ def delete_list_by_index(del_list, excess):
     array = np.array(del_list)
     index = [i for i in range(start, end)]
     
-    return list(np.delete(array,index))
+    return np.delete(array,index)
 
 def get_filenames_from(folder, ending=''):
     """
@@ -75,20 +93,20 @@ def get_filenames_from(folder, ending=''):
     filenames = os.listdir(path)
     return [filename for filename in filenames if filename.endswith(ending)]
 
-def get_number_of_weeknds(long_dates, short_dates):
+def get_number_of_weeknds(list2, list1):
     """
     Returns list with number of weeknds per time period
 
     Args:
-        long_dates (pandas.core.indexes.datetimes.DatetimeIndex): Long Dates
-        short_dates (pandas.core.indexes.datetimes.DatetimeIndex): Short Dates
+        list2 (pandas.core.indexes.datetimes.DatetimeIndex): Long Dates
+        list1 (pandas.core.indexes.datetimes.DatetimeIndex): Short Dates
 
     Returns:
         list: list with number of weeknds per time period
     """
     num_weeknds = []
-    for i in range(0,len(long_dates)):
-        num_weeknds.append(len(get_weeknd(long_dates[i], short_days[i])))
+    for i in range(0,len(list2)):
+        num_weeknds.append(len(get_weeknd(list2[i], short_days[i])))
     
     return num_weeknds
 
