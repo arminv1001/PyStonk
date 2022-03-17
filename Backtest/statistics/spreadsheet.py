@@ -15,10 +15,11 @@ MAX_DD_D_PERIOD = np.power(60,2)*24
 
 class SpreadSheet(object):
 
-    def __init__(self, df, trade_history_s, performance, drawdown, start_capital, comission, periodicity):
+    def __init__(self, df, equity_df, trade_history, performance, drawdown, start_capital, comission, periodicity):
 
         self.__master_df = df
-        self.__trade_history_s = trade_history_s
+        self.__equity_df = equity_df
+        self.__trade_history = trade_history
         self.__performance_measurement = performance
         self.__drawdown = drawdown
         self.__start_capital = start_capital
@@ -55,8 +56,8 @@ class SpreadSheet(object):
         return self.__all_trades_info
 
     @property
-    def trade_history_s(self):
-        return self.__trade_history_s
+    def trade_history(self):
+        return self.__trade_history
 
     @property
     def winners(self):
@@ -103,13 +104,13 @@ class SpreadSheet(object):
             pd.DataFrame: General Information DataFrame
         """
 
-        initial_capital = self.__master_df['Equity'][0]
-        ending_capital = self.__master_df['Equity'][-1]
-        net_profit = self.__master_df['Equity'][-1] - \
-            self.__master_df['Equity'][0]
+        initial_capital = self.__equity_df['Equity'][0]
+        ending_capital = self.__equity_df['Equity'][-1]
+        net_profit = self.__equity_df['Equity'][-1] - \
+            self.__equity_df['Equity'][0]
         net_profit_pct = (
-            self.__master_df['Equity'][-1] - self.__master_df['Equity'][0]) / self.__master_df['Equity'][0]
-        trans_cost = len(self.__trade_history_s) * self.__comission
+            self.__equity_df['Equity'][-1] - self.__equity_df['Equity'][0]) / self.__equity_df['Equity'][0]
+        trans_cost = len(self.__trade_history) * self.__comission
 
         data = {
             'Initial Capital': initial_capital,
@@ -132,7 +133,7 @@ class SpreadSheet(object):
             pd.DataFrame: Performance measurements DataFrame
         """
 
-        trade_history = self.__trade_history_s
+        trade_history = self.__trade_history
         exposure = sum(trade_history['Bars Held']) / \
             len(self.__master_df.index)  # Time Exposure
         sharpe = self.__performance_measurement.calculate_sharpe_ratio()
@@ -147,14 +148,14 @@ class SpreadSheet(object):
         calmar = self.__performance_measurement.calculate_calmar_ratio(
             self.__drawdown.max_duration_bars)
         data = {
-            'Exposure': exposure,
+            'Exposure %': exposure,
             'Sharpe Ratio': sharpe,
             'Sortino Ratio': sortino,
             'M&M Ratio: RAP': rap,
             'M&M Ratio: rm': rm,
             'Alpha': alpha,
             'Beta': beta,
-            'CAGR': cagr,
+            'CAGR %': cagr,
             'MAR': mar,
             'Calmar': calmar
         }
@@ -171,12 +172,12 @@ class SpreadSheet(object):
             pd.DataFrame: Info regarding all trades DataFrame
         """
 
-        trade_history = self.__trade_history_s
+        trade_history = self.__trade_history
 
         data = {
             'Avg. PnL': trade_history['Return'].mean(),
             'Avg. PnL %': trade_history['Return %'].mean(),
-            'Avg. Bars held': int(self.__trade_history_s['Bars Held'].mean())
+            'Avg. Bars held': int(self.__trade_history['Bars Held'].mean())
         }
 
         all_trades = pd.DataFrame.from_dict(data, orient='index')
@@ -191,7 +192,7 @@ class SpreadSheet(object):
             pd.DataFrame: Infos about winning trades DataFrame
         """
 
-        trade_history = self.__trade_history_s
+        trade_history = self.__trade_history
 
         if trade_history.empty:
             total_profit = np.nan
@@ -202,9 +203,9 @@ class SpreadSheet(object):
             bars_in_largest_win = np.nan
         else:
             winner_bars = trade_history['Bars Held'][trade_history['Return'] > 0]
-            total_profit = trade_history['Return'][trade_history['Return'] > 0].sum(
+            total_profit = trade_history['Return %'][trade_history['Return %'] > 0].sum(
             )
-            avg_profit = trade_history['Return'][trade_history['Return'] > 0].mean(
+            avg_profit = trade_history['Return %'][trade_history['Return %'] > 0].mean(
             )
             avg_bars_held = float(
                 'NaN') if winner_bars.empty else int(winner_bars.mean())
@@ -216,7 +217,7 @@ class SpreadSheet(object):
        
         data = {
             'Total Profit': total_profit,
-            'Avg. Profit': avg_profit,
+            'Avg. Profit %': avg_profit,
             'Avg. Bars Held': avg_bars_held,
             'Max. Consecutive': max_consecutive,
             'Largest Win': largest_win,
@@ -235,9 +236,7 @@ class SpreadSheet(object):
             pd.DataFrame: History all positions DataFrame
         """
 
-        trade_history = self.__trade_history_s
-
-        print(trade_history)
+        trade_history = self.__trade_history
 
         if trade_history.empty:
             total_profit = np.nan
@@ -248,9 +247,9 @@ class SpreadSheet(object):
             bars_in_largest_loss = np.nan
         else:
             loser_bars = trade_history['Bars Held'][trade_history['Return'] < 0]
-            total_profit = trade_history['Return'][trade_history['Return'] < 0].sum(
+            total_profit = trade_history['Return %'][trade_history['Return %'] < 0].sum(
             )
-            avg_profit = trade_history['Return'][trade_history['Return'] < 0].mean(
+            avg_profit = trade_history['Return %'][trade_history['Return %'] < 0].mean(
             )
             avg_bars_held = float(
                 'NaN') if loser_bars.empty else int(loser_bars.mean())
@@ -273,7 +272,7 @@ class SpreadSheet(object):
 
     def __create_runs_info(self):
 
-        trade_history = self.__trade_history_s
+        trade_history = self.__trade_history
 
         hhi_positive = self.__performance_measurement.calculate_hhi(
             trade_history['Return %'][trade_history['Return'] > 0])

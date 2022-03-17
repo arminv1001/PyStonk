@@ -14,16 +14,14 @@ MAX_DD_D_PERIOD = np.power(60, 2)*24
 
 class PerformanceMeasurement(object):
 
-    def __init__(self, df, benchmark_df, trade_history_p, trade_history_b, periodicity, rfr):
+    def __init__(self, equity_df, trade_history_s, trade_history_b, periodicity, rfr):
 
-        self.__master_df = df
-        self.__benchmark_df = benchmark_df
-        self.__periodicity = periodicity
-        self.__trade_history_s = trade_history_p
+        self.__equity_df = equity_df
+        self.__trade_history_s = trade_history_s
         self.__trade_history_b = trade_history_b
         self.__return_s = self.__trade_history_s['Return %'].to_numpy()
         self.__return_b = self.__trade_history_b['Return %'].to_numpy()
-        
+        self.__periodicity = periodicity
         self.__rfr = rfr # risk-free rate
 
     def calculate_sharpe_ratio(self, period="Annually"):
@@ -166,7 +164,7 @@ class PerformanceMeasurement(object):
             float: CAGR
         """
         periods = PERIODS[period]
-        equity = self.__master_df['Equity %']
+        equity = self.__equity_df['Equity %']
         years = len(equity) / float(periods)
         return ((equity[-1]/equity[1]) ** (1.0 / years)) - 1.0 
 

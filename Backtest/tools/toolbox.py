@@ -5,6 +5,11 @@ import os
 PATH = '/Users/mr.kjn/Projects/PyStonk/Backtest/'
 
 
+def color_win_loss(val):
+    color = 'limegreen' if val > 0 else '#cd4f39'
+    return f'background-color: {color}'
+
+
 def get_consecutive(trade_history, of_wins=True):
     """
     Returns the value of the longest consecutive of winners/losers

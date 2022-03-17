@@ -3,15 +3,12 @@ from controller.BacktestController import *
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
+from tools.toolbox import *
 from plotly.subplots import make_subplots
 import numpy as np
 import streamlit as st
 import os
 import datetime
-
-
-
-
 
 def run_backtest_viewer():
 
@@ -23,44 +20,49 @@ def run_backtest_viewer():
 
     controller = BacktestController(bt_settings_dict)
     master_df = controller.master_df
+    equity_df = controller.equity_df
     spreadsheet = controller.spreadsheet
     drawdown_df = controller.drawdown_df
 
-    print(42)
-    print(drawdown_df)
-
     view_dashboard(bt_settings_dict, master_df)
-    view_trade_history(spreadsheet.trade_history_s)
-    view_equity(master_df[['Equity', 'Equity %']])
-    view_drawdown(drawdown_df)
+    view_trade_history(spreadsheet.trade_history)
+    view_equity(equity_df[['Equity', 'Equity %']], master_df['Position'])
+    view_drawdown(drawdown_df, master_df['Position'])
     view_spreadsheet(spreadsheet)
 
 
 def view_trade_history(trade_history_df):
         st.header('Trade History')
+        trade_history_df = trade_history_df.style.applymap(
+            color_win_loss, subset=['Return', 'Return %']).highlight_max(
+            color='lightgreen', axis=0).highlight_min(color='#cd4f39', axis=0)
         st.dataframe(trade_history_df, 1100, 200)
 
 
-def view_equity(equity_df):
+
+    
+def view_equity(equity_df, position_df):
     # TO-DO: Equity Drawdown direkt untereinander
     st.header('Equity')
     equity_rad = st.radio('', ['absolute', 'percentage %'], key="<equity_rad>")
 
     if equity_rad == 'absolute':
-        equity_data = equity_df['Equity']
+        equity_data = equity_df['Equity'][position_df < 0]
 
     elif equity_rad == 'percentage %':
-        equity_data = equity_df['Equity %']
-
+        equity_data = equity_df['Equity %'][position_df < 0]
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=equity_df.index, y=equity_data))
+    # nicht richtig gemappt
+    fig.add_trace(go.Scatter(x=equity_data.index, y=equity_data))
+
     fig.layout.update(title_text='Equity',
                         xaxis_rangeslider_visible=True)
     st.plotly_chart(fig)
 
 
-def view_drawdown(drawdown_df):
+
+def view_drawdown(drawdown_df, position_df):
     st.header('Drawdown')
     dd_rad = st.radio('', ['absolute', 'percentage %'], key="<dd_rad>")
     if dd_rad == 'absolute':
@@ -70,7 +72,7 @@ def view_drawdown(drawdown_df):
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=drawdown_df.index, y=drawdown_data))
+        x=drawdown_data.index, y=drawdown_data))
     fig.layout.update(
         title_text='Drawdown', xaxis_rangeslider_visible=True)
     st.plotly_chart(fig)
