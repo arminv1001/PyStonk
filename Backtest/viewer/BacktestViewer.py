@@ -47,15 +47,24 @@ def view_charts(equity_df, drawdown_df, position_df):
     
 def view_equity(equity_df, position_df):
     equity_rad = st.radio(
-        '', ['percentage %', 'absolute', ], key="<equity_rad>")
+        '', ['percentage %', 'absolute', 'log10 percentage %', 'log10absolute'], key="<equity_rad>")
 
     if equity_rad == 'absolute':
+        print(1)
         equity_data = equity_df['Equity'][position_df < 0]
-
+        benchmark_data = equity_df['Benchmark'][position_df < 0]
     elif equity_rad == 'percentage %':
+        print(2)
         equity_data = equity_df['Equity %'][position_df < 0]
-
-    benchmark_data = equity_df['Benchmark'][position_df < 0]
+        benchmark_data = equity_df['Benchmark %'][position_df < 0]
+    elif equity_rad == 'log10 percentage %':
+        print(3)
+        equity_data = equity_df['log Equity %'][position_df < 0]
+        benchmark_data = equity_df['log Benchmark %'][position_df < 0]
+    elif equity_rad == 'log10 absolute':
+        print(4)
+        equity_data = equity_df['log Equity'][position_df < 0]
+        benchmark_data = equity_df['log Benchmark'][position_df < 0]
 
     fig = go.Figure()
 
@@ -92,9 +101,10 @@ def view_drawdown(drawdown_df, position_df):
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=drawdown_data.index, y=drawdown_data))
+        x=drawdown_data.index, y=drawdown_data, name='Drawdown'))
     fig.layout.update(
-        title_text='Drawdown', xaxis_rangeslider_visible=True)
+        title_text='Drawdown', 
+        xaxis_rangeslider_visible=True)
     st.plotly_chart(fig)
 
 

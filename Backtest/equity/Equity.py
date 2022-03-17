@@ -37,6 +37,9 @@ class Equity(object):
         equity_df['Equity %'] = equity_df['Equity'] / self.__start_capital * 100
         equity_df['Equity %'][0] = 100  
 
+        equity_df['log Equity'] = np.log10(equity_df['Equity'])
+        equity_df['log Equity %'] = np.log10(equity_df['Equity %'])
+
         return equity_df
 
     def __create_capital(self):

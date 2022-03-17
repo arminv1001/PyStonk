@@ -88,8 +88,13 @@ class BacktestController(object):
             self.__size)
 
         self.__equity_df = self.__equity_s.df
-        self.__equity_df['Benchmark'] = self.__equity_s.df['Equity %'] - self.__equity_b.df['Equity %']
-        print(self.__equity_df)
+        self.__equity_df['Benchmark'] = self.__equity_s.df['Equity'] - \
+            self.__equity_b.df['Equity']
+        self.__equity_df['Benchmark %'] = self.__equity_s.df['Equity %'] - self.__equity_b.df['Equity %']
+        self.__equity_df['log Benchmark'] = self.__equity_s.df['log Equity'] - \
+            self.__equity_b.df['log Equity']
+        self.__equity_df['log Benchmark %'] = self.__equity_s.df['log Equity %'] - \
+            self.__equity_b.df['log Equity %']
 
         
     def __set_trade_histories(self):
