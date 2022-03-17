@@ -26,8 +26,8 @@ def run_backtest_viewer():
 
     view_dashboard(bt_settings_dict, master_df)
     view_trade_history(spreadsheet.trade_history)
-    view_equity(equity_df[['Equity', 'Equity %']], master_df['Position'])
-    view_drawdown(drawdown_df, master_df['Position'])
+    view_charts(equity_df[['Equity', 'Equity %']],
+                drawdown_df, master_df['Position'])
     view_spreadsheet(spreadsheet)
 
 
@@ -39,11 +39,14 @@ def view_trade_history(trade_history_df):
         st.dataframe(trade_history_df, 1100, 200)
 
 
+def view_charts(equity_df, drawdown_df, position_df):
 
+    st.header('Charts')
+
+    view_equity(equity_df, position_df)
+    view_drawdown(drawdown_df, position_df)
     
 def view_equity(equity_df, position_df):
-    # TO-DO: Equity Drawdown direkt untereinander
-    st.header('Equity')
     equity_rad = st.radio('', ['absolute', 'percentage %'], key="<equity_rad>")
 
     if equity_rad == 'absolute':
@@ -53,7 +56,7 @@ def view_equity(equity_df, position_df):
         equity_data = equity_df['Equity %'][position_df < 0]
 
     fig = go.Figure()
-    # nicht richtig gemappt
+
     fig.add_trace(go.Scatter(x=equity_data.index, y=equity_data))
 
     fig.layout.update(title_text='Equity',
@@ -63,12 +66,14 @@ def view_equity(equity_df, position_df):
 
 
 def view_drawdown(drawdown_df, position_df):
-    st.header('Drawdown')
-    dd_rad = st.radio('', ['absolute', 'percentage %'], key="<dd_rad>")
+
+    """ dd_rad = st.radio('', ['absolute', 'percentage %'], key="<dd_rad>")
     if dd_rad == 'absolute':
-        drawdown_data = drawdown_df['Drawdown']
+        drawdown_data = drawdown_df['Drawdown'][position_df < 0]
     elif dd_rad == 'percentage %':
-        drawdown_data = drawdown_df['Drawdown %']
+        drawdown_data = drawdown_df['Drawdown %'][position_df < 0] """
+
+    drawdown_data = drawdown_df['Drawdown %'][position_df < 0]
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
