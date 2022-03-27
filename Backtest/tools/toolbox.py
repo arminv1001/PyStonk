@@ -65,6 +65,7 @@ def get_equal_len_list(list1, list2):
     Returns:
         [type]: [description]
     """
+    excess_list = []
 
     if len(list1) < len(list2):
         excess = len(list2) - len(list1)
