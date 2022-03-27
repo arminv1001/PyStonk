@@ -6,6 +6,15 @@ PATH = '/Users/mr.kjn/Projects/PyStonk/Backtest/'
 
 
 def color_win_loss(val):
+    """
+    Returns color string for pd dataframe
+
+    Args:
+        val (str): val
+
+    Returns:
+        str: color string
+    """
     color = 'limegreen' if val > 0 else '#cd4f39'
     return f'background-color: {color}'
 
@@ -15,11 +24,11 @@ def get_consecutive(trade_history, of_wins=True):
     Returns the value of the longest consecutive of winners/losers
 
     Args:
-
-        of_wins (bool, optional): winners or losers. Defaults to True.
+        trade_history (pd Series): trade history
+        of_wins (bool, optional): wins or loss. Defaults to True.
 
     Returns:
-        float: consecutive
+        int: returns longest run in bars
     """
 
     consecutive = 0
@@ -46,22 +55,32 @@ def get_consecutive(trade_history, of_wins=True):
 
 
 def get_equal_len_list(list1, list2):
+    """
+    Shortens lists to the same size and creates list of excess data
 
-        if len(list1) < len(list2):
-            excess = len(list2) - len(list1)
-            list2_list = delete_list_by_index(list2, excess)
-            excess_list = list2[len(list2)-excess:]
-            list1_list = list1
-        elif len(list2) < len(list1):
-            excess = len(list1) - len(list2)
-            list1_list = delete_list_by_index(list1, excess)
-            excess_list = list1[len(list1)-excess:]
-            list2_list = list2
-        else:
-            list2_list = list2
-            list1_list = list1
+    Args:
+        list1 (list): list 1
+        list2 (list ): list 2
 
-        return list2_list, list1_list, excess_list
+    Returns:
+        [type]: [description]
+    """
+
+    if len(list1) < len(list2):
+        excess = len(list2) - len(list1)
+        list2_list = delete_list_by_index(list2, excess)
+        excess_list = list2[len(list2)-excess:]
+        list1_list = list1
+    elif len(list2) < len(list1):
+        excess = len(list1) - len(list2)
+        list1_list = delete_list_by_index(list1, excess)
+        excess_list = list1[len(list1)-excess:]
+        list2_list = list2
+    else:
+        list2_list = list2
+        list1_list = list1
+
+    return list2_list, list1_list, excess_list
 
 
 def delete_list_by_index(del_list, excess):
@@ -85,6 +104,10 @@ def delete_list_by_index(del_list, excess):
 def get_filenames_from(folder, ending=''):
     """
     Get list of all CSV filanmes in directory
+
+    Args:
+        folder: folder to get filenames from
+        endings: ending of filenames
 
     Returns:
         list: list of all CSV filenames

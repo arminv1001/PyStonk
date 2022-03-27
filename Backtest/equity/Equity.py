@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 
 class Equity(object):
+    """
+    Equity contains all relevant information about equity of strategy
+
+    """
 
     def __init__(self, symbol, df, start_capital, comission, size=1):
 
-        """
-        Note:
-        df: DataFrame contains Close Price, Position
-        """
         self.__symbol = symbol
         self.__master_df = df
         self.__comission = comission
@@ -28,6 +28,12 @@ class Equity(object):
     
 
     def __create_equity(self):
+        """
+        Creates equity dataframe in abs., %, log10 abs. and log10 %
+
+        Returns:
+            pd DataFrame: equity dataframe
+        """
 
         equity_df = pd.DataFrame(index=self.__master_df.index)
         equity_df['Equity'] = self.__capital_df['Capital'][self.__master_df['Position'] < 0]
@@ -44,7 +50,7 @@ class Equity(object):
 
     def __create_capital(self):
         """
-        Creates a column in MasterDataFrame which contains the current capital
+        Creates dataframe with information about current capital, size and Profit & Loss of a bar
         """
         df = pd.DataFrame(index=self.__master_df.index)
         df['Capital'] = np.nan

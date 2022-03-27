@@ -11,6 +11,10 @@ from strategy.strategy1 import *
 
 
 class BacktestController(object):
+    """
+    BacktestController is responsible for providing all Backtest-relevant data
+
+    """
 
     def __init__(self, view_settings_dict):
 
@@ -46,6 +50,10 @@ class BacktestController(object):
         return self.__equity_df
 
     def __set_all(self):
+        """
+        Creates all relevant objects
+        """
+
         self.__set_master_dfs()
         self.__set_equity()
         self.__set_trade_histories()
@@ -55,6 +63,9 @@ class BacktestController(object):
 
     
     def __set_master_dfs(self):
+        """
+        Creates Master DF containing stock data and buy/sell signals
+        """
 
         self.__master_df_s = self.__get_data_df(
             self.__symbol,
@@ -72,6 +83,9 @@ class BacktestController(object):
         self.__master_df_b = run_strategy(self.__master_df_b)
 
     def __set_equity(self):
+        """
+        Creates Equity for strategy and benchmark and Equity DataFrame
+        """
         
         self.__equity_s = Equity(
             self.__symbol,
@@ -98,6 +112,10 @@ class BacktestController(object):
 
         
     def __set_trade_histories(self):
+        """
+        Creates TradeHistory object for strategy and benchmark 
+        """
+
         self.__trade_history_s = TradeHistory(
             self.__master_df_s[['Close', 'Position']],
             self.__equity_s.complete_df,
@@ -109,10 +127,18 @@ class BacktestController(object):
             self.__size)
 
     def __set_drawdown(self):
+        """
+        Creates Drawdown object for strategy
+        """
+
         self.__drawdown = Drawdown(self.__equity_s.df)
         
 
     def __set_performance_measurement(self):
+        """
+        Creates PerformanceMeasurement object for strategy
+        """
+
         self.__performance_measurement = PerformanceMeasurement(
             self.__equity_s.df,
             self.__trade_history_s.df,
@@ -123,6 +149,9 @@ class BacktestController(object):
         
 
     def __set_spreadsheet(self):
+        """
+        Creates Spreadsheet object 
+        """
 
         self.__spreadsheet = SpreadSheet(
             self.__master_df_s,
@@ -135,11 +164,25 @@ class BacktestController(object):
             self.__periodicity)
 
     def __get_data_df(self, symbol, start_date, end_date, source):
+        """
+        Gets stock data of symbol for given timeframe
 
+        Args:
+            symbol (str): Symbol
+            start_date (datetime): Start Time
+            end_date (datetime): End Time
+            source (str): Source from which the stock data is retrivied from
+
+        Returns:
+            DataFrame: DataFrame containing stock data
+        """
+
+        # Retrieves from Yahoo Finance Data
         if source == 'Yahoo Finance':
             master = yf.Ticker(symbol[0])
             master_df = master.history(start_date, end_date)
 
+        # Retrieves Data from backtest_data folder
         elif source == 'Source Folder':
             csvDP = CSVDataPreparer(csv_symbols=symbol)
             master_df = csvDP.get_assets_historic_data(

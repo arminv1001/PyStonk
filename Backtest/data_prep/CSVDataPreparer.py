@@ -6,6 +6,10 @@ import pytz
 CSV_DIR = '/Users/mr.kjn/Projects/PyStonk/Backtest/backtest_data'
 
 class CSVDataPreparer(object):
+    """
+    Responsible for retrieving data from CSV files in backtest_data
+
+    """
 
     def __init__(self, csv_symbols=None):
         self.__csv_dir = CSV_DIR
@@ -49,13 +53,14 @@ class CSVDataPreparer(object):
             pd DataFrame: CSV file as pd DataFrame
         """
 
+        # get csv data and format to df
         csv_df = pd.read_csv(
             os.path.join(self.__csv_dir, csv_filename),
             index_col='Date',
             parse_dates=True
         ).sort_index()
 
-        # Ensure all timestamps are set to UTC for consistency
+        # ensure all timestamps are set to UTC for consistency
         csv_df = csv_df.set_index(csv_df.index.tz_localize(pytz.UTC))
         return csv_df
 
@@ -69,16 +74,20 @@ class CSVDataPreparer(object):
         
         csv_filenames = []
 
-        if self.__csv_symbols is not None:
+        # retrieve data for all given symbols from backtest_data
+        if self.__csv_symbols is not None: 
             for symbol in self.__csv_symbols:
                 if '.csv' not in symbol:
                     csv_filenames.append(symbol+".csv")
                 else:
                     csv_filenames.append(symbol)
+        # no given symbols -> retrieve all data from backtest_data
         else:
             csv_filenames = self._get_all_asset_csv_filenames()
 
         asset_symbols = {}
+
+        # format into dataframe
         for csv_filename in csv_filenames:
             asset_symbol = self._get_asset_symbol_from_filename(csv_filename)
             csv_df = self._format_csv_into_df(csv_filename)
@@ -100,13 +109,14 @@ class CSVDataPreparer(object):
             pd DataFrame: pd DataFrame containing all historic data
         """
         col_list = []
+
+        # retrieve data for each asset
         for asset in assets:
             if asset in self.__csv_symbols: 
                 entry_df = self.__asset_dfs[asset]
                 col_list.append(entry_df)
-        df = pd.concat(col_list, axis=1).dropna(
-            how='all')  # convert into DataFrame & drop NA
+        df = pd.concat(col_list, axis=1).dropna(how='all')  # convert into DataFrame & drop NA
         df = df.loc[start_dt:end_dt] # only close prices from start to end dates
-        #df.columns = assets # set symbol as column names
+
         return df
     

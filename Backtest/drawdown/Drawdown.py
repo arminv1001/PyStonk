@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 
 
 class Drawdown(object):
+    """
+    Drawdown contains all relevant information about drawdowns of strategy
+
+    """
 
     def __init__(self, equity_df):
 
@@ -43,13 +47,14 @@ class Drawdown(object):
 
     def __calculate_drawdown(self, equity_type):
         """
-        Calculates drawdowns of the equity curve & drawdown duration.
+        Calculates drawdown of equity and indentifies high-watermarks
 
         Args:
-            equity (pd Series): cumulative profit-loss curve
+            equity_type (str): name of equity column
 
         Returns:
-            pd DataFrame, float: drawdown, max. drawdown
+            list: drawdown
+            list: high-watermarks
         """
 
         equity = self.__equity_df[equity_type]
@@ -71,6 +76,13 @@ class Drawdown(object):
         return drawdown, hwm_dates
 
     def __calculate_durations(self):
+        """
+        Calculates the drawdown durations between two high_watermarks in time & bars
+
+        Returns:
+            list(datetime): drawdown durations
+            list(float): drawdown durations
+        """
 
         dd_durations = [timedelta()]
         dd_durations_bars = [0]

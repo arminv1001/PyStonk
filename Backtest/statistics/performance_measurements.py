@@ -13,6 +13,10 @@ MAX_DD_D_PERIOD = np.power(60, 2)*24
 
 
 class PerformanceMeasurement(object):
+    """
+    PerformanceMeasurement contains all relevant performance ratios of strategy
+
+    """
 
     def __init__(self, equity_df, trade_history_s, trade_history_b, periodicity, rfr):
 
@@ -30,10 +34,10 @@ class PerformanceMeasurement(object):
 
         Args:
             returns (pd Series): return of strategy
-            timeframe (str, optional): desired trading periods. Defaults to "Daily".
+            timeframe (str, optional): desired trading periods. Defaults to "Annually".
 
         Returns:
-            float: Sharpe Ration
+            float: Sharpe Ratio
         """
         periods = PERIODS[period]
 
@@ -50,10 +54,10 @@ class PerformanceMeasurement(object):
 
         Args:
             returns (pd Series): return of strategy
-            timeframe (str, optional): desired trading periods. Defaults to "Daily".
+            timeframe (str, optional): desired trading periods. Defaults to "Annually".
 
         Returns:
-            float: Sortino Ration
+            float: Sortino Ratio
         """
 
         periods = PERIODS[period]
@@ -69,14 +73,14 @@ class PerformanceMeasurement(object):
 
     def calculate_mm_ratio(self, period="Annually"):
         """
-        Calculates the Sharpe Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
+        Calculates the Modigliani and Modigliani Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
 
         Args:
             returns (pd Series): return of strategy
-            timeframe (str, optional): desired trading periods. Defaults to "Daily".
+            timeframe (str, optional): desired trading periods. Defaults to "Annually".
 
         Returns:
-            float: Sharpe Ration
+            float: Modigliani and Modigliani Ratio
         """
 
         periods = PERIODS[period]
@@ -95,14 +99,14 @@ class PerformanceMeasurement(object):
 
     def calculate_sterling_ratio(self, sorted_dd, N=10, period="Annually"):
         """
-        Calculates the Sharpe Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
+        Calculates the Sterling Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
 
         Args:
             returns (pd Series): return of strategy
-            timeframe (str, optional): desired trading periods. Defaults to "Daily".
+            timeframe (str, optional): desired trading periods. Defaults to "Annually".
 
         Returns:
-            float: Sharpe Ration
+            float: Sterling Ratio
         """
 
         periods = PERIODS[period]
@@ -114,14 +118,15 @@ class PerformanceMeasurement(object):
 
     def calculate_burke_ratio(self, sorted_dd, N=10, period="Annually"):
         """
-        Calculates the Sharpe Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
+        Calculates the Burke Ratio of the strategy (based on a benchmark with neglectable risk-free rate).
 
         Args:
-            returns (pd Series): return of strategy
-            timeframe (str, optional): desired trading periods. Defaults to "Daily".
+            sorted_dd (pd Series): sorted drawdowns
+            n (int): number of max. drawdowns
+            timeframe (str, optional): desired trading periods. Defaults to "Annually".
 
         Returns:
-            float: Sharpe Ration
+            float: Burke Ratio
         """
 
         periods = PERIODS[period]
@@ -140,7 +145,7 @@ class PerformanceMeasurement(object):
             max_dd (float): maximum drawdown in % 
 
         Returns:
-            float: MAR Ration
+            float: MAR Ratio
         """
         return cagr/max_dd
 
@@ -149,11 +154,10 @@ class PerformanceMeasurement(object):
         Calculates the Calmar Ratio of the strategy.
 
         Args:
-            rp (float): portfolio return %
             max_dd (float): maximum drawdown in % 
 
         Returns:
-            float: Calmar Ration
+            float: Calmar Ratio
         """
         periods = PERIODS[period]
         return np.sqrt(periods) * ((np.mean(self.__return_s) -
@@ -166,10 +170,6 @@ class PerformanceMeasurement(object):
         and then creating a compound annualised rate based
         on the total return.
 
-        Args:
-            equity (pd Series): equity curve
-            periods (int, optional): desired trading periods. Defaults to "Daily".
-
         Returns:
             float: CAGR
         """
@@ -181,10 +181,6 @@ class PerformanceMeasurement(object):
     def calculate_beta_alpha(self):
         """
         Calculates the Beta & Alpha of the strategy
-
-        Args:
-            returns (pd.DataFrame): Returns
-            benchmark (pd.DataFrame): compared market index or broad benchmark
 
         Returns:
             float: alpha, beta
@@ -201,6 +197,15 @@ class PerformanceMeasurement(object):
         return beta, alpha
 
     def calculate_hhi(self, returns):
+        """
+        Calculates the Herfindahl-Hirschman Index of the strategy
+
+        Args:
+            returns (pd Series): returns of trades
+
+        Returns:
+            float: Herfindahl-Hirschman Index
+        """
         
         weight = returns/returns.sum()
         w_sum_p2 = (weight**2).sum()

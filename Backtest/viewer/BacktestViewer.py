@@ -11,6 +11,9 @@ import os
 import datetime
 
 def run_backtest_viewer():
+    """
+    Main function to create the streamlit gui
+    """
 
     st.title("Backtest Dashboard")
 
@@ -31,14 +34,28 @@ def run_backtest_viewer():
 
 
 def view_trade_history(trade_history_df):
-        st.header('Trade History')
-        trade_history_df = trade_history_df.style.applymap(
-            color_win_loss, subset=['Return', 'Return %']).highlight_max(
-            color='lightgreen', axis=0).highlight_min(color='#cd4f39', axis=0)
-        st.dataframe(trade_history_df, 1100, 200)
+    """
+    Displays trade history dataframe
+
+    Args:
+        trade_history_df (pd DataFrame): trade history df
+    """
+    st.header('Trade History')
+    trade_history_df = trade_history_df.style.applymap(
+        color_win_loss, subset=['Return', 'Return %']).highlight_max(
+        color='lightgreen', axis=0).highlight_min(color='#cd4f39', axis=0)
+    st.dataframe(trade_history_df, 1100, 200)
 
 
 def view_charts(equity_df, drawdown_df, position_df):
+    """
+    Displays equity and drawdown charts
+
+    Args:
+        equity_df (pd DataFrame): equity df
+        drawdown_df (pd DataFrame): drawdown df
+        position_df (pd DataFrame: position df
+    """
 
     st.header('Charts')
 
@@ -46,6 +63,13 @@ def view_charts(equity_df, drawdown_df, position_df):
     view_drawdown(drawdown_df, position_df)
     
 def view_equity(equity_df, position_df):
+    """
+    Displays equity information
+
+    Args:
+        equity_df (pd DataFrame): equity df
+        position_df (pd DataFrame): position df
+    """
     equity_rad = st.radio(
         '', ['percentage %', 'absolute', 'log10 percentage %', 'log10absolute'], key="<equity_rad>")
 
@@ -90,6 +114,14 @@ def view_equity(equity_df, position_df):
 
 
 def view_drawdown(drawdown_df, position_df):
+    """
+    Displays drawdown information
+
+    Args:
+        drawdown_df (pd DataFrame): drawdown df
+        position_df (pd DataFrame): position df
+    """
+    
 
     """ dd_rad = st.radio('', ['absolute', 'percentage %'], key="<dd_rad>")
     if dd_rad == 'absolute':
@@ -109,6 +141,13 @@ def view_drawdown(drawdown_df, position_df):
 
 
 def view_spreadsheet(spreadsheet):
+    """
+    Displays spreadsheet information
+
+    Args:
+        spreadsheet_df (pd DataFrame): spreadsheet df
+        position_df (pd DataFrame): position df
+    """
 
     st.header('SpreadSheet')
     
@@ -130,12 +169,16 @@ def view_spreadsheet(spreadsheet):
     winner_col.dataframe(spreadsheet.winners)
     loser_col.subheader('Losers')
     loser_col.dataframe(spreadsheet.losers)
-
-    
-    
    
 
 def view_dashboard(bt_settings_dict, master_df):
+    """
+    Display dashboard with generel information about strategy and stock
+
+    Args:
+        bt_settings_dict (dict):  backtest settings
+        master_df (pd DataFrame): master df
+    """
     st.header("General Info")
     chart_type= st.selectbox('Select Chart Type', ['OHLC', 'Close'])
 
@@ -222,6 +265,12 @@ def view_dashboard(bt_settings_dict, master_df):
 
 
 def view_sidebar_settings():
+    """
+    Display sidebar menu for backtest settings
+
+    Returns:
+        dict: backtest settings
+    """
 
     strategy_list = get_filenames_from('strategy')
     data_list = get_filenames_from('backtest_data')

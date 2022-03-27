@@ -14,6 +14,10 @@ PERIODS = {
 MAX_DD_D_PERIOD = np.power(60,2)*24
 
 class SpreadSheet(object):
+    """
+    SpreadSheet contains all relevant statistical information of strategy
+
+    """
 
     def __init__(self, df, equity_df, trade_history, performance, drawdown, start_capital, comission, periodicity):
 
@@ -110,6 +114,7 @@ class SpreadSheet(object):
             self.__equity_df['Equity'][0]
         net_profit_pct = (
             self.__equity_df['Equity'][-1] - self.__equity_df['Equity'][0]) / self.__equity_df['Equity'][0]
+        ratio = len(self.__trade_history[self.__trade_history['Return'] > 0])/len(self.__trade_history)
         trans_cost = len(self.__trade_history) * self.__comission
 
         data = {
@@ -117,6 +122,7 @@ class SpreadSheet(object):
             'Ending Capital': ending_capital,
             'Net Profit': net_profit,
             'Net Profit %': net_profit_pct,
+            'Ratio Longs': ratio,
             'Transaction Costs': trans_cost 
         }
 
@@ -233,7 +239,7 @@ class SpreadSheet(object):
         Retuns DataFrame with infos about losing trades: Total Loss, Avg. Loss, Avg, Bars Held, Max. Consecutive, Largest Loss, Bars in Largest Loss
 
         Returns:
-            pd.DataFrame: History all positions DataFrame
+            pd.DataFrame: fnfos about losing trades DataFrame
         """
 
         trade_history = self.__trade_history
@@ -272,6 +278,12 @@ class SpreadSheet(object):
         return losers
 
     def __create_runs_info(self):
+        """
+        Retuns DataFrame with infos about runs: HHI on positives, HHI on negatives, Max DD in pct, Max DD in bars
+
+        Returns:
+            pd.DataFrame: info about runs DataFrame
+        """
 
         trade_history = self.__trade_history
 

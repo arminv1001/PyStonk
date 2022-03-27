@@ -5,6 +5,10 @@ from tools.toolbox import *
 
 
 class TradeHistory(object):
+    """
+    TradeHistory contains all information about all trades of strategy
+
+    """
 
     def __init__(self, df, equity_df, size):
         self.__master_df = df
@@ -51,6 +55,15 @@ class TradeHistory(object):
     
 
     def __get_close(self, dates):
+        """
+        Return close price for given date
+
+        Args:
+            dates (datetime): date
+
+        Returns:
+            float: close price
+        """
 
         closes = []
         for date in dates:
@@ -93,6 +106,12 @@ class TradeHistory(object):
 
 
     def __get_return_of_trades(self):
+        """
+        Return list of returns of all finished trades
+
+        Returns:
+            list: returns in abs. & pct
+        """
         
         equity = self.__equity_df['Equity']
         equity_pct = self.__equity_df['Equity %']
@@ -114,11 +133,11 @@ class TradeHistory(object):
 
     def __get_bars_held(self):
         """
-            Returns bars held
+        Returns bars held
 
-            Returns:
-                np.array: bars held
-            """
+        Returns:
+            np.array: bars held
+        """
 
         bars_held = []
 
@@ -132,6 +151,15 @@ class TradeHistory(object):
         return np.array(bars_held)
 
     def __get_sizes(self, size_val):
+        """
+        Returns list of sizes of the trades
+
+        Args:
+            size_val (pd Series): size values
+
+        Returns:
+            list: sizes
+        """
         sizes_df = self.__equity_df['Size']
 
         sizes = []
