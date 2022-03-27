@@ -1,15 +1,21 @@
 import numpy as np
 import pandas as pd
+from datetime import datetime, timedelta
 
 
 class Drawdown(object):
+    """
+    Drawdown contains all relevant information about drawdowns of strategy
 
-    def __init__(self, master_df):
+    """
 
-        self.__master_df = master_df
+    def __init__(self, equity_df):
+
+        self.__equity_df = equity_df
         self.__drawdown_df, self.__hwm_dates = self.__calculate_drawdown('Equity')
+        self.__drawdown_df = self.__drawdown_df * -1
         self.__drawdown_df_pct, _ = self.__calculate_drawdown('Equity %')
-        self.__drawdown_df_pct = self.__drawdown_df_pct * 100
+        self.__drawdown_df_pct = self.__drawdown_df_pct * -100
         self.__complete_df = pd.concat(
             [self.__drawdown_df, self.__drawdown_df_pct], axis=1)
         self.__complete_df = self.__complete_df.rename(
@@ -41,16 +47,17 @@ class Drawdown(object):
 
     def __calculate_drawdown(self, equity_type):
         """
-        Calculates drawdowns of the equity curve & drawdown duration.
+        Calculates drawdown of equity and indentifies high-watermarks
 
         Args:
-            equity (pd Series): cumulative profit-loss curve
+            equity_type (str): name of equity column
 
         Returns:
-            pd DataFrame, float: drawdown, max. drawdown
+            list: drawdown
+            list: high-watermarks
         """
 
-        equity = self.__master_df[equity_type]
+        equity = self.__equity_df[equity_type]
 
         hwm = np.zeros(len(equity.index))  # high water marks (global maximum)
         
@@ -69,17 +76,24 @@ class Drawdown(object):
         return drawdown, hwm_dates
 
     def __calculate_durations(self):
+        """
+        Calculates the drawdown durations between two high_watermarks in time & bars
 
-        dd_durations = []
-        dd_durations_bars = []
+        Returns:
+            list(datetime): drawdown durations
+            list(float): drawdown durations
+        """
+
+        dd_durations = [timedelta()]
+        dd_durations_bars = [0]
 
         for i in range(len(self.__hwm_dates)):
             if i < len(self.__hwm_dates)-1:
                 dd_durations.append(self.__hwm_dates[i+1]-self.__hwm_dates[i])
 
-                fellow_index = self.__master_df.index.get_loc(
+                fellow_index = self.__equity_df.index.get_loc(
                     self.__hwm_dates[i+1])
-                previous_index = self.__master_df.index.get_loc(
+                previous_index = self.__equity_df.index.get_loc(
                     self.__hwm_dates[i])
 
                 dd_durations_bars.append(fellow_index - previous_index)

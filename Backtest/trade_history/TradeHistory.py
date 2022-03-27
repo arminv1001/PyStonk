@@ -5,13 +5,21 @@ from tools.toolbox import *
 
 
 class TradeHistory(object):
+    """
+    TradeHistory contains all information about all trades of strategy
 
-    def __init__(self, df, size):
+    """
+
+    def __init__(self, df, equity_df, size):
         self.__master_df = df
+        self.__equity_df = equity_df
         self.__long_dates, self.__short_dates, self.__excess_dates = self.__get_long_short_dates()
-        self.__sizes = self.__get_sizes(size)
+        self.__buy_price = self.__get_close(self.__long_dates)
+        self.__sell_price = self.__get_close(self.__short_dates)
         self.__returns, self.__returns_pct = self.__get_return_of_trades()
         self.__bars_held = self.__get_bars_held()
+        self.__sizes = self.__get_sizes(size)
+        
         
         self.__df = self.__create_trade_history_df()
 
@@ -30,6 +38,8 @@ class TradeHistory(object):
         data = {
             'Start Date': self.__long_dates,
             'End Date': self.__short_dates,
+            'Buy Price': self.__buy_price,
+            'Sell Price': self.__sell_price,
             'Return': self.__returns,
             'Return %': self.__returns_pct,
             'Bars Held': self.__bars_held,
@@ -38,8 +48,29 @@ class TradeHistory(object):
 
         trade_hist = pd.DataFrame.from_dict(data, orient='index').transpose()
         trade_hist = trade_hist.rename(columns={0: "Data"})
+        
 
         return trade_hist
+
+    
+
+    def __get_close(self, dates):
+        """
+        Return close price for given date
+
+        Args:
+            dates (datetime): date
+
+        Returns:
+            float: close price
+        """
+
+        closes = []
+        for date in dates:
+            close = self.__master_df.at[date, 'Close']
+            closes.append(close)
+        
+        return closes
 
     def __get_long_short_dates(self):
         """
@@ -75,9 +106,15 @@ class TradeHistory(object):
 
 
     def __get_return_of_trades(self):
+        """
+        Return list of returns of all finished trades
 
-        equity = self.__master_df['Equity']
-        equity_pct = self.__master_df['Equity %']
+        Returns:
+            list: returns in abs. & pct
+        """
+        
+        equity = self.__equity_df['Equity']
+        equity_pct = self.__equity_df['Equity %']
 
         returns = []
         returns_pct = []
@@ -96,11 +133,11 @@ class TradeHistory(object):
 
     def __get_bars_held(self):
         """
-            Returns bars held
+        Returns bars held
 
-            Returns:
-                np.array: bars held
-            """
+        Returns:
+            np.array: bars held
+        """
 
         bars_held = []
 
@@ -114,7 +151,16 @@ class TradeHistory(object):
         return np.array(bars_held)
 
     def __get_sizes(self, size_val):
-        sizes_df = self.__master_df['Size']
+        """
+        Returns list of sizes of the trades
+
+        Args:
+            size_val (pd Series): size values
+
+        Returns:
+            list: sizes
+        """
+        sizes_df = self.__equity_df['Size']
 
         sizes = []
 

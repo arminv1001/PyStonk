@@ -1,6 +1,5 @@
 import sys
 from data_prep.CSVDataPreparer import *
-from RSI import *
 from equity.Equity import *
 from statistics.spreadsheet import *
 from viewer.BacktestViewer import *
@@ -11,6 +10,15 @@ import numpy as np
 import streamlit as st
     
 def run_strategy(master_df):
+    """
+    Simple function running Moving Average Strategy
+
+    Args:
+        master_df (pd Dataframe): master_df
+
+    Returns:
+        pd Dataframe: master_df with Signals and Position
+    """
     
     master_df['20_SMA'] = master_df['Close'].rolling(window=20, min_periods=1).mean()
     master_df['50_SMA'] = master_df['Close'].rolling(window=50, min_periods=1).mean()
