@@ -4,6 +4,7 @@
 * Sidebar für Backtest Settings ausfüllen
 * Bei Periodicity: Daily auswählen
 * bis jetzt nur für Daily Timeframe ausgelegt
+* bei Source Folder Daten auf verfügbares Startdatum bzw. Enddatum achten
 * Size = 0 heißt komplettes Kapital wird investiert
 
 ### First Things First
