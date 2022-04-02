@@ -1,9 +1,10 @@
-from urllib.request import DataHandler
+from typing_extensions import Self
+from Daten.Datahandler import Datahandler
 from Broker import Broker
 from TelegramBot import TelegramBot
 import pandas as pd
 import Database.db_functions as db
-from LiveTradingSystem import LiveTradingSytem
+#from LiveTradingSystem import LiveTradingSytem
 
 class TradingSystem:
     #Abstrakte Klasse
@@ -27,7 +28,7 @@ class TradingSystem:
         self.__broker = broker
         self.__time_frame = timeFrame
         self.__weekend_trading = weekendTrading
-        self.__datenhandler = DataHandler(symbolsNames,alternativDataNames,broker,timeFrame)
+        self.__datenhandler = Datahandler(symbolsNames,alternativDataNames,broker,timeFrame)
         self.__loockback_candels = lookback_candels
         self.__last_signal = 0 # -1 short | 0 nothing | 1 buy
         self.__order_list = []
@@ -41,6 +42,13 @@ class TradingSystem:
     
     def getWeekendTrading(self):
         return self.__weekend_trading
+    
+    def getDatenHandler(self):
+        return self.__datenhandler
+    
+    def setSignalDf(self,signal_df:pd.DataFrame):
+        self.__signal_df = signal_df
+    
 
     def placeOrder(self,price:float, stoploss:float=None, takeprofit:float=None):
         """Place Order
@@ -108,8 +116,7 @@ class TradingSystem:
         #signal_df = ...
         pass
     
-    @property
-    def getSignalDf(self):
+    def getSignalDf(self)->pd.DataFrame:
         return self.__signal_df
     
     def tradingHandler(self):
@@ -140,7 +147,7 @@ class TradingSystem:
                 self.__last_signal = self.__signal_df["Position"].iloc[-1]
 
             self.tradingHandler()
-            LiveTradingSytem.startScheduler(self)    
+            #LiveTradingSytem.startScheduler(self)    
        
         
 

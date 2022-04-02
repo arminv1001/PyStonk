@@ -8,7 +8,7 @@ class Strategy1(TradingSystem):
         super().__init__(symbolsNames, alternativDataNames, systemName, systemType, systemStyle, broker, timeFrame, weekendTrading, lookback_candels)
         
     def createSignal(self, lookback_period=-1):
-        tmpData = self.__datenhandler.getData()
+        tmpData = super().getDatenHandler().getData()
         if lookback_period > 0:
            tmpData.tail(lookback_period)
         else:
@@ -25,4 +25,5 @@ class Strategy1(TradingSystem):
             tmpData['Short_Signal'] = tmpData['Close'][tmpData['Position'] == -1]
             tmpData['Long_Signal'] = tmpData['Close'][tmpData['Position'] == 1]
             #master_df = master_df.rename(columns={symbol[0]:"Close"})
-        super().__signal_df = tmpData
+        super().setSignalDf(tmpData)
+        print(tmpData)
