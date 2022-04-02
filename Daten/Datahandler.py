@@ -1,8 +1,17 @@
+
 import pandas as pd
 from Broker import Broker
 from datetime import datetime
 class Datahandler:
-    def __init__(self,SymbolsNames,AlternativDataNames,_Broker:Broker,TimeFrame):
+    def __init__(self,SymbolsNames:list,AlternativDataNames:list,_Broker:Broker,TimeFrame):
+        """_summary_
+
+        Args:
+            SymbolsNames (list): _description_
+            AlternativDataNames (list): _description_
+            _Broker (Broker): _description_
+            TimeFrame (_type_): _description_
+        """
         self.__symbols_names = SymbolsNames
         self.__alternativ_data_names = AlternativDataNames
         self.__broker = _Broker
@@ -16,9 +25,9 @@ class Datahandler:
         self.__last_hist_data_update = datetime.now()
         for symbol in self.__symbols_names:
             if start_date == None and end_date == None:
-                hist_data = self.__broker.getHistoricalData(symbol)
+                hist_data = self.__broker.getHistoricalData(symbol,self.__time_scale)
             elif start_date != None and end_date != None:
-                hist_data = self.__broker.getHistoricalData(symbol,start_date,end_date)
+                hist_data = self.__broker.getHistoricalData(symbol,start_date,end_date,self.__time_scale)
             if self.__data != None:
                 self.__data.merge(hist_data, left_on='DateTime', right_on='DateTime')
 
@@ -35,7 +44,8 @@ class Datahandler:
             if self.__data != None:
                 self.__data.merge(alt_data, left_on='DateTime', right_on='DateTime')
 
-    def getData(self):
+    def getData(self)->pd.DataFrame:
+        self.updateData()
         return self.__data
     
     def updateData(self):

@@ -1,7 +1,7 @@
 import pandas as pd
 class Broker:
     ## Abstrakte Klasse
-    def __init__(self,BrokerName,ApiUrl):
+    def __init__(self,BrokerName:str,ApiUrl:str):
         self.__broker_name = BrokerName
         self.API_URL = ApiUrl
     
@@ -12,7 +12,7 @@ class Broker:
         #"Need to be implemented"
         pass
     
-    def sendTrade(self,price=None,stoploss=None,takeprofit=None) -> int:
+    def sendTrade(self,stoploss=None,takeprofit=None) -> int:
         #"Need to be implemented"
         pass
     
@@ -24,11 +24,11 @@ class Broker:
         #"Need to be implemented
         pass
 
-    def getHistoricalData(self,symbol,timeframe="D") -> pd.DataFrame:
+    def getHistoricalData(self,symbol:str,timeframe:str) -> pd.DataFrame:
         # if start and end date is none than get max data
         return "Need to be implemented"
         
-    def getHistoricalData(self,symbol,start_date,end_date,timeframe="D") -> pd.DataFrame:
+    def getHistoricalData(self,symbol:str,start_date,end_date,timeframe:str) -> pd.DataFrame:
         # if start and end date is none than get max data
         return "Need to be implemented"
     

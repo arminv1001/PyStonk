@@ -1,3 +1,4 @@
+from urllib.request import DataHandler
 from Broker import Broker
 from TelegramBot import TelegramBot
 import pandas as pd
@@ -6,17 +7,31 @@ from LiveTradingSystem import LiveTradingSytem
 
 class TradingSystem:
     #Abstrakte Klasse
-    def __init__(self) -> None:
-        self.__system_type = None #TradingSystem or Indicator
-        self.__system_style = None #long only = 1;short only = 2; long and short = 3
-        self.__system_name = None
-        self.__broker = None
-        self.__time_frame = None
-        self.__weekend_trading = False
-        self.__datenhandler = None #tippfehler
-        self.__loockback_candels = None
-        self.__last_signal = None
+    def __init__(self,symbolsNames:list,alternativDataNames:list,systemName:str, systemType:str, systemStyle:int, broker:Broker, timeFrame:str,weekendTrading:bool = False, lookback_candels:int = None):
+        """
+        TradingSystem
+        Args:
+            symbolsNames (list): symbol name list
+            alternativDataNames (list): alternative data list - [0] - data name --- [1] - type [csv, excel]
+            systemName (str): system name
+            systemType (str): system type - TradingSystem or Indicator
+            systemStyle (int): long only = 1;short only = 2; long and short = 3
+            broker (Broker): Broker
+            timeFrame (str): Time Frame
+            weekendTrading (bool, optional): if weekends trading is allowed set true. Defaults to False.
+            lookback_candels (int, optional): number of lookback candels. Defaults to None.
+        """
+        self.__system_type = systemType
+        self.__system_style = systemStyle
+        self.__system_name = systemName
+        self.__broker = broker
+        self.__time_frame = timeFrame
+        self.__weekend_trading = weekendTrading
+        self.__datenhandler = DataHandler(symbolsNames,alternativDataNames,broker,timeFrame)
+        self.__loockback_candels = lookback_candels
+        self.__last_signal = 0 # -1 short | 0 nothing | 1 buy
         self.__order_list = []
+        self.__signal_df = None #Kursdaten + Signale
         
     def getSystemType(self):
         return self.__system_type
@@ -27,69 +42,105 @@ class TradingSystem:
     def getWeekendTrading(self):
         return self.__weekend_trading
 
-    def placeOrder(self,price, stoploss=None, takeprofit=None):
-        order_id = self.__broker.sendOrder(price=price)
+    def placeOrder(self,price:float, stoploss:float=None, takeprofit:float=None):
+        """Place Order
+
+        Args:
+            price (float): price
+            stoploss (float, optional): Stoploss Price. Defaults to None.
+            takeprofit (float, optional): Takeprofit Price. Defaults to None.
+        """
+        order_id = self.__broker.sendOrder(price=price,stoploss=stoploss,takeprofit=takeprofit)
         db.saveOrderID(order_id,self.__system_name)
         self.__order_list.append(order_id)
         TelegramBot.sendMessage(self.__system_name + " placed Order")
     
-    def placeTrade(self,price=None, stoploss=None, takeprofit=None):
-        order_id = self.__broker.sendTrade(price=price)
+    def placeTrade(self, stoploss:float=None, takeprofit:float=None):
+        """Place Trade
+
+        Args:
+            stoploss (float, optional): Stoploss Price. Defaults to None.
+            takeprofit (float, optional): Takeprofit Price. Defaults to None.
+        """
+        order_id = self.__broker.sendTrade(stoploss=stoploss,takeprofit=takeprofit)
         db.saveOrderID(order_id,self.__system_name)
         self.__order_list.append(order_id)
         TelegramBot.sendMessage(self.__system_name + " placed Trade")
     
-    def closeOrder(self,id):
+    def closeOrder(self,id:int):
+        """Close Order by ID
+
+        Args:
+            id (int): Order ID
+        """
         if self.__broker.closeOrder(id):
             db.deleteOrderID(id)
             TelegramBot.sendMessage(self.__system_name + " closed Order")
         else:
             TelegramBot.sendMessage(self.__system_name + " failed Trade")
 
-    def closeTrade(self,id):
+    def closeTrade(self,id:int):
+        """Close Trade by ID
+
+        Args:
+            id (int): Order ID
+        """
         if self.__broker.closeTrade(id):
             db.deleteOrderID(id)
             TelegramBot.sendMessage(self.__system_name + " closed Trade")
         else:
             TelegramBot.sendMessage(self.__system_name + " failed Trade")
 
-    def createSignal(self,lookback_period) -> pd.DataFrame:
-        #Trading system
-        pass
+    def createSignal(self,lookback_period=-1):
+        """Generates Trading labels
+            1 - long
+            0 - nothing
+           -1 - short
 
+        Args:
+            lookback_period (int, optional): Lookback Periode. Defaults to -1.
+        """
+        #tmpData = self.__datenhandler.getData()
+        #if lookback_period > 0:
+         #   tmpData.tail(lookback_period)
+        #else:
+            #Trading system
+        #signal_df = ...
+        pass
+    
+    @property
+    def getSignalDf(self):
+        return self.__signal_df
+    
     def tradingHandler(self):
+        """How system has to react to a new state
+        """
         # Implement
         pass
 
-   
-    
     def checkSignal(self):
-        self.__datenhandler.updateData()
-        
+        """Check for Signal
+        """
         if self.__loockback_candels == None:
             print("You need to define loockback_candels")
             return None
+        self.createSignal(self.__loockback_candels)
+        if self.__signal_df["Position"].iloc[-1] != self.__last_signal:
+            if self.__system_style == 1: #long
+                if self.__signal_df["Position"].iloc[-1] == -1:
+                    return None
+                else:
+                    self.__last_signal = self.__signal_df["Position"].iloc[-1]
+            elif self.__system_style == 2: #short
+                if self.__signal_df["Position"].iloc[-1] == 1:
+                    return None
+                else:
+                    self.__last_signal = self.__signal_df["Position"].iloc[-1]
+            elif self.__system_style == 3: #long & short
+                self.__last_signal = self.__signal_df["Position"].iloc[-1]
 
-        signal_df = self.createSignal(self.__loockback_candels)
-
-        if self.__system_style == 1:
-            signal_df = signal_df[signal_df["Long"] == 1]
-            last_signal = signal_df["Long"].iloc[-1]
-        elif self.__system_style == 2:
-            signal_df = signal_df[signal_df["Short"] == 1]
-            last_signal = signal_df["Long"].iloc[-1]
-        elif self.__system_style == 3:
-            signal_df = signal_df[signal_df["Short"] == 1 | signal_df["Long"] == 1]
-            last_signal = signal_df.iloc[-1]
-
-        if last_signal["Long"] == 1:
-            last_signal = signal_df["Long"].iloc[-1]
-        elif last_signal["Short"] == 1:
-            last_signal = signal_df["Short"].iloc[-1]
-        
-        if last_signal > self.__last_signal:
             self.tradingHandler()
-        LiveTradingSytem.startScheduler(self)    
+            LiveTradingSytem.startScheduler(self)    
        
         
 

@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import numpy as np
 import streamlit as st
     
-def run_strategy(master_df):
+def run_strategy(master_df)->pd.DataFrame:
     """
     Simple function running Moving Average Strategy
 
