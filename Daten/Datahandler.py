@@ -2,6 +2,7 @@
 import pandas as pd
 from Broker import Broker
 from datetime import datetime
+import yfinance as yf
 class Datahandler:
     def __init__(self,SymbolsNames:list,AlternativDataNames:list,_Broker:Broker,TimeFrame:str):
         """_summary_
@@ -42,6 +43,9 @@ class Datahandler:
                     alt_data = pd.read_csv(alternativ_data[0])
                 elif alternativ_data[1] == "excel":
                     alt_data =  pd.read_excel(alternativ_data[0])
+                elif alternativ_data[1] == "yahoo":
+                    master = yf.Ticker(alternativ_data[0])
+                    alt_data = master.history(period="max")
                 else:
                     print("Unknown type " + alternativ_data[1])
                 print(self.__data)

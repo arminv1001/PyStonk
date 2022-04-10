@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 Broker/LoginData/OandaData_Demo.txt
+Broker/LoginData/OandaDataDemo.txt
