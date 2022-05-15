@@ -176,7 +176,7 @@ class PerformanceMeasurement(object):
         periods = PERIODS[period]
         equity = self.__equity_df['Equity %']
         years = len(equity) / float(periods)
-        return ((equity[-1]/equity[1]) ** (1.0 / years)) - 1.0 
+        return ((equity.tail(1).item()/equity[1]) ** (1.0 / years)) - 1.0
 
     def calculate_beta_alpha(self):
         """

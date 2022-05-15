@@ -84,7 +84,7 @@ class Drawdown(object):
             list(float): drawdown durations
         """
 
-        dd_durations = [timedelta()]
+        dd_durations = [0]
         dd_durations_bars = [0]
 
         for i in range(len(self.__hwm_dates)):

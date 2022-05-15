@@ -1,4 +1,4 @@
-from controller.BacktestController import *
+from model.BacktestModel import *
 
 import matplotlib.pyplot as plt
 import plotly.express as px
@@ -9,6 +9,8 @@ import numpy as np
 import streamlit as st
 import os
 import datetime
+
+STRATEGY_LIST = ['Moving Average', 'ML Bitcoin']
 
 def run_backtest_viewer():
     """
@@ -21,7 +23,7 @@ def run_backtest_viewer():
 
     run = st.button('Run')
 
-    controller = BacktestController(bt_settings_dict)
+    controller = BacktestModel(bt_settings_dict)
     master_df = controller.master_df
     equity_df = controller.equity_df
     spreadsheet = controller.spreadsheet
@@ -265,32 +267,33 @@ def view_sidebar_settings():
         dict: backtest settings
     """
 
-    strategy_list = get_filenames_from('strategy')
     data_list = get_filenames_from('backtest_data')
 
     # General
     st.sidebar.header('General')
     strategy = st.sidebar.selectbox(
-        'Choose your strategy', strategy_list)
-    source_list = ['Source Folder', 'Yahoo Finance']
+        'Choose your strategy', STRATEGY_LIST)
+    source_list = ['.csv', 'Yahoo Finance']
     data_source_s = st.sidebar.selectbox(
-        'Select your data source', source_list, key="<symbol>")
+        'Select your System Data Source', source_list, key="<symbol>")
     
 
     if data_source_s == 'Yahoo Finance':
-        symbols = st.sidebar.text_input('Symbol')
-    elif data_source_s == 'Source Folder':
-        symbols_csv = st.sidebar.multiselect('Symbol', data_list)
-        symbols = [symbol.replace('.csv', '') for symbol in symbols_csv]
+        symbols = st.sidebar.text_input('System Symbol', key="<ds_s>")
+    elif data_source_s == '.csv':
+        #symbols_csv = st.sidebar.multiselect('Symbol', data_list)
+        #symbols = [symbol.replace('.csv', '') for symbol in symbols_csv]
+        symbols = st.sidebar.text_input('System Symbol', key="<ds_s>")
 
     data_source_b = st.sidebar.selectbox(
-        'Select your data source', source_list, key="<benchmark>")
+        'Select your Benchmark Data Source', source_list, key="<benchmark>")
 
     if data_source_b == 'Yahoo Finance':
-        benchmark = st.sidebar.text_input('Symbol')
-    elif data_source_b == 'Source Folder':
-        benchmark_csv = st.sidebar.multiselect('Benchmark', data_list)
-        benchmark = [symbol.replace('.csv', '') for symbol in benchmark_csv]
+        benchmark = st.sidebar.text_input('Benchmark Symbol', key="<ds_b>")
+    elif data_source_b == '.csv':
+        #benchmark_csv = st.sidebar.multiselect('Benchmark', data_list)
+        #benchmark = [symbol.replace('.csv', '') for symbol in benchmark_csv]
+        benchmark = st.sidebar.text_input('Benchmark Symbol', key="<ds_b>")
 
     # Date & Time
     st.sidebar.header('Date & Time')

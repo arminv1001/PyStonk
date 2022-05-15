@@ -107,13 +107,10 @@ class SpreadSheet(object):
         Returns:
             pd.DataFrame: General Information DataFrame
         """
-
         initial_capital = self.__equity_df['Equity'][0]
-        ending_capital = self.__equity_df['Equity'][-1]
-        net_profit = self.__equity_df['Equity'][-1] - \
-            self.__equity_df['Equity'][0]
-        net_profit_pct = (
-            self.__equity_df['Equity'][-1] - self.__equity_df['Equity'][0]) / self.__equity_df['Equity'][0]
+        ending_capital = self.__equity_df['Equity'].tail(1).item()
+        net_profit = ending_capital - initial_capital
+        net_profit_pct = net_profit / initial_capital
         ratio = len(self.__trade_history[self.__trade_history['Return'] > 0])/len(self.__trade_history)
         trans_cost = len(self.__trade_history) * self.__comission
 
@@ -222,7 +219,7 @@ class SpreadSheet(object):
                                                               == largest_win].iloc[0]
        
         data = {
-            'Total Profit': total_profit,
+            'Total Profit %': total_profit,
             'Avg. Profit %': avg_profit,
             'Avg. Bars Held': avg_bars_held,
             'Max. Consecutive': max_consecutive,
@@ -265,8 +262,8 @@ class SpreadSheet(object):
             bars_in_largest_loss = trade_history['Bars Held'][trade_history['Return'] == largest_loss].iloc[0]
 
         data = {
-            'Total Profit': total_profit,
-            'Avg. Profit': avg_profit,
+            'Total Profit %': total_profit,
+            'Avg. Profit %': avg_profit,
             'Avg. Bars Held': avg_bars_held,
             'Max. Consecutive': max_consecutive,
             'Largest Loss': largest_loss,

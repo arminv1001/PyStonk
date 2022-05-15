@@ -39,16 +39,16 @@ class Datahandler:
                 alt_data = None
                 #0 - name/path
                 #1 - type)
-                if alternativ_data[1] == "csv":
+                if alternativ_data[1] == ".csv":
                     alt_data = pd.read_csv(alternativ_data[0])
                 elif alternativ_data[1] == "excel":
                     alt_data =  pd.read_excel(alternativ_data[0])
-                elif alternativ_data[1] == "yahoo":
+                elif alternativ_data[1] == "Yahoo Finance":
                     master = yf.Ticker(alternativ_data[0])
                     alt_data = master.history(period="max")
                 else:
                     print("Unknown type " + alternativ_data[1])
-                print(self.__data)
+                #print(self.__data)
                # if isinstance(self.__data,pd.DataFrame):
                    # if not alt_data.equals(self.__data):
                        # self.__data.merge(alt_data, left_on='DateTime', right_on='DateTime')

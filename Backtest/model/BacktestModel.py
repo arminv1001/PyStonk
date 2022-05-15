@@ -4,15 +4,20 @@ import yfinance as yf
 
 from data_prep.CSVDataPreparer import *
 from equity.Equity import *
-from statistics.spreadsheet import *
+from statistics.SpreadSheet import *
 from tools.toolbox import *
 from trade_history.TradeHistory import *
 from strategy.strategy1 import *
 
+sys.path.append('.')
+from Daten.Datahandler import Datahandler
 
-class BacktestController(object):
+CSV_DIR = os.path.join(os.path.abspath(os.curdir), "Backtest/backtest_data")
+
+
+class BacktestModel(object):
     """
-    BacktestController is responsible for providing all Backtest-relevant data
+    BacktestModel is responsible for providing all Backtest-relevant data
 
     """
 
@@ -67,20 +72,22 @@ class BacktestController(object):
         Creates Master DF containing stock data and buy/sell signals
         """
 
-        self.__master_df_s = self.__get_data_df(
-            self.__symbol,
-            self.__start_date_time,
-            self.__end_date_time,
-            self.__data_source_s)
+        
 
-        self.__master_df_b = self.__get_data_df(
-            self.__benchmark_symbol,
-            self.__start_date_time,
-            self.__end_date_time,
-            self.__date_source_b)
+        # self.__master_df_s = self.__get_data_df(
+        #     self.__symbol,
+        #     self.__start_date_time,
+        #     self.__end_date_time,
+        #     self.__data_source_s)
 
-        self.__master_df_s = run_strategy(self.__master_df_s)
-        self.__master_df_b = run_strategy(self.__master_df_b)
+        # self.__master_df_b = self.__get_data_df(
+        #     self.__benchmark_symbol,
+        #     self.__start_date_time,
+        #     self.__end_date_time,
+        #     self.__date_source_b)
+
+        self.__master_df_s = run_strategy(self.__strategy, self.__symbol, self.__data_source_s)
+        self.__master_df_b = run_strategy(self.__strategy, self.__benchmark_symbol, self.__data_source_s)
 
     def __set_equity(self):
         """
@@ -176,16 +183,21 @@ class BacktestController(object):
         Returns:
             DataFrame: DataFrame containing stock data
         """
+        
+        
 
-        # Retrieves from Yahoo Finance Data
-        if source == 'Yahoo Finance':
-            master = yf.Ticker(symbol[0])
-            master_df = master.history(start_date, end_date)
+        # # Retrieves from Yahoo Finance Data
+        # if source == 'Yahoo Finance':
 
-        # Retrieves Data from backtest_data folder
-        elif source == 'Source Folder':
-            csvDP = CSVDataPreparer(csv_symbols=symbol)
-            master_df = csvDP.get_assets_historic_data(
-                start_date, end_date, symbol)
+        #     master = yf.Ticker(symbol[0])
+        #     master_df = master.history(start_date, end_date)
+
+        # # Retrieves Data from backtest_data folder
+        # elif source == '.csv':
+        #     master_df = data_handler.getAlternativData()
+
+        #     csvDP = CSVDataPreparer(csv_symbols=symbol)
+        #     master_df = csvDP.get_assets_historic_data(
+        #         start_date, end_date, symbol)
 
         return master_df

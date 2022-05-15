@@ -12,11 +12,11 @@ class TradingSystem:
         """
         TradingSystem
         Args:
-            symbolsNames (list): symbol name list
-            alternativDataNames (list): alternative data list - [0] - data name --- [1] - type [csv, excel]
+            symbolsNames (list): symbol name list (live)
+            alternativDataNames (list): alternative data list - [0] - data name --- [1] - type [csv, excel] 
             systemName (str): system name
             systemType (str): system type - TradingSystem or Indicator
-            systemStyle (int): long only = 1;short only = 2; long and short = 3
+            systemStyle (int): long only = 1; short only = 2; long and short = 3
             broker (Broker): Broker
             timeFrame (str): Time Frame
             weekendTrading (bool, optional): if weekends trading is allowed set true. Defaults to False.

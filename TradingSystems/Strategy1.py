@@ -10,7 +10,7 @@ class Strategy1(TradingSystem):
     def createSignal(self, lookback_period=-1):
         tmpData = super().getDatenHandler().getData()
         if lookback_period > 0:
-           tmpData.tail(lookback_period)
+            tmpData.tail(lookback_period)
         else:
             tmpData['20_SMA'] = tmpData['Close'].rolling(window=20, min_periods=1).mean()
             tmpData['50_SMA'] = tmpData['Close'].rolling(window=50, min_periods=1).mean()
@@ -26,4 +26,4 @@ class Strategy1(TradingSystem):
             tmpData['Long_Signal'] = tmpData['Close'][tmpData['Position'] == 1]
             #master_df = master_df.rename(columns={symbol[0]:"Close"})
         super().setSignalDf(tmpData)
-        print(tmpData)
+        #print(tmpData)
