@@ -1,7 +1,7 @@
 import sys
 from data_prep.CSVDataPreparer import *
 from equity.Equity import *
-from statistics.SpreadSheet import *
+from statistics.spreadsheet import *
 from viewer.BacktestViewer import *
 
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ import os
 
 sys.path.append('.')
 from TradingSystems.Strategy1 import Strategy1
-
+from TradingSystems.ml_stra import ml_strat_reg
 
 def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
 
@@ -31,6 +31,8 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
 
     ma_strategy = Strategy1(
         symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
+    
+    ml_strat_reg_model = ml_strat_reg([],)
     ma_strategy.createSignal(parameter)
     signal_df = ma_strategy.getSignalDf()
 
