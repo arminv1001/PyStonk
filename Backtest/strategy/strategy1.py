@@ -15,7 +15,7 @@ sys.path.append('.')
 from TradingSystems.Strategy1 import Strategy1
 
 
-def run_strategy(strategy, symbols, data_source) -> pd.DataFrame:
+def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
 
     if data_source.startswith('.'):
         filename = symbols + data_source
@@ -31,7 +31,7 @@ def run_strategy(strategy, symbols, data_source) -> pd.DataFrame:
 
     ma_strategy = Strategy1(
         symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
-    ma_strategy.createSignal()
+    ma_strategy.createSignal(parameter)
     signal_df = ma_strategy.getSignalDf()
 
     return signal_df

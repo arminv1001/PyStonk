@@ -1,9 +1,11 @@
 from model.BacktestModel import *
+from optimizer.Optimizer import *
+from tools.toolbox import *
 
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-from tools.toolbox import *
+
 from plotly.subplots import make_subplots
 import numpy as np
 import streamlit as st
@@ -11,6 +13,14 @@ import os
 import datetime
 
 STRATEGY_LIST = ['Moving Average', 'ML Bitcoin']
+SPREADSHEET_INFOS = {
+    'General': ['Initial Capital', 'Ending Capital', 'Net Profit', 'Net Profit %', 'Ratio Longs', 'Transaction Costs'],
+    'Performance': ['Exposure %', 'Sharpe Ratio', 'Sortino Ratio', 'M&M Ratio: RAP', 'M&M Ratio: rm', 'Alpha', 'Beta', 'CAGR %', 'MAR', 'Calmar'],
+    'All Trades': ['Avg. PnL', 'Avg. PnL %', 'Avg. Bars Held'],
+    'Winners': ['Total Profit', 'Avg. Profit %', 'Avg, Bars Held', 'Max. Consecutive', 'Largest Win', 'Bars in Largest Win'],
+    'Losers': ['Total Loss', 'Avg. Loss %', 'Avg, Bars Held', 'Max. Consecutive', 'Largest Loss', 'Bars in Largest Loss'],
+    'Runs Info': ['HHI on positives', 'HHI on negatives', 'Max DD %', 'Max DD in Bars']
+}
 
 def run_backtest_viewer():
     """
@@ -21,18 +31,74 @@ def run_backtest_viewer():
 
     bt_settings_dict = view_sidebar_settings()
 
-    run = st.button('Run')
+    run_normal, run_opt = st.columns(2)
 
-    controller = BacktestModel(bt_settings_dict)
-    master_df = controller.master_df
-    equity_df = controller.equity_df
-    spreadsheet = controller.spreadsheet
-    drawdown_df = controller.drawdown_df
+    if run_normal.button('Run Backtest'):
 
-    view_dashboard(bt_settings_dict, master_df)
-    view_trade_history(spreadsheet.trade_history)
-    view_charts(equity_df, drawdown_df, master_df['Position'])
-    view_spreadsheet(spreadsheet)
+        bt_settings_dict['parameter'] = bt_settings_dict['opt_start']
+        
+        model = BacktestModel(bt_settings_dict)
+        master_df = model.master_df
+        equity_df = model.equity_df
+        spreadsheet = model.spreadsheet
+        drawdown_df = model.drawdown_df
+
+        view_dashboard(bt_settings_dict, master_df)
+        view_trade_history(spreadsheet.trade_history)
+        view_charts(equity_df, drawdown_df, master_df['Position'])
+        view_spreadsheet(spreadsheet)
+
+    if run_opt.button('Run with Optimizer'):
+
+        optimizer = Optimizer(bt_settings_dict)
+
+        parameter = st.select_slider('Runs', optimizer.parameters)
+
+        models = optimizer.models
+        model = models[parameter]
+
+        master_df = model.master_df
+        equity_df = model.equity_df
+        spreadsheet = model.spreadsheet
+        drawdown_df = model.drawdown_df
+
+        view_dashboard(bt_settings_dict, master_df)
+        view_trade_history(spreadsheet.trade_history)
+        view_charts(equity_df, drawdown_df, master_df['Position'])
+        view_spreadsheet(spreadsheet)
+        view_optimizer(optimizer)
+
+
+def view_optimizer(optimizer):
+
+    st.header('Charts')
+
+    info_type_field, info_key_field = st.columns(2)
+
+    info_type_list = SPREADSHEET_INFOS.keys()
+    info_type = info_type_field.selectbox('Performance Type', info_type_list)
+
+    info_key_list = SPREADSHEET_INFOS[info_type]
+    info_key = info_key_field.selectbox('Performance Metric', info_key_list)
+        
+    x_data = optimizer.parameters
+    y_data = optimizer.get_info(info_type, info_key)
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=x_data, 
+        y=y_data,
+        name='Optimizer'))
+    fig.layout.update(
+        title_text='Optimizer',
+        xaxis_title="Parameter",
+        yaxis_title=info_key,
+        xaxis_rangeslider_visible=True)
+    st.plotly_chart(fig)
+    
+    
+
+
 
 
 def view_trade_history(trade_history_df):
@@ -69,23 +135,20 @@ def view_equity(equity_df, position_df):
         equity_df (pd DataFrame): equity df
         position_df (pd DataFrame): position df
     """
+    
     equity_rad = st.radio(
         '', ['percentage %', 'absolute', 'log10 percentage %', 'log10absolute'], key="<equity_rad>")
 
     if equity_rad == 'absolute':
-        print(1)
         equity_data = equity_df['Equity'][position_df < 0]
         benchmark_data = equity_df['Benchmark'][position_df < 0]
     elif equity_rad == 'percentage %':
-        print(2)
         equity_data = equity_df['Equity %'][position_df < 0]
         benchmark_data = equity_df['Benchmark %'][position_df < 0]
     elif equity_rad == 'log10 percentage %':
-        print(3)
         equity_data = equity_df['log Equity %'][position_df < 0]
         benchmark_data = equity_df['log Benchmark %'][position_df < 0]
     elif equity_rad == 'log10 absolute':
-        print(4)
         equity_data = equity_df['log Equity'][position_df < 0]
         benchmark_data = equity_df['log Benchmark'][position_df < 0]
 
@@ -311,19 +374,41 @@ def view_sidebar_settings():
     comission = st.sidebar.number_input('Comission')
     rfr = st.sidebar.number_input('Risk-Free Rate') / 100 # in %
 
+    # Optimizer
+    st.sidebar.header('Optimizer')
+    opt_checkbox = st.sidebar.checkbox('Activate')
+    opt_start = st.sidebar.number_input('(Start) Parameter')
+    if opt_checkbox: 
+        opt_end = st.sidebar.number_input('End Parameter')
+        opt_steps = st.sidebar.number_input('Steps')
+    else: 
+        opt_end = None
+        opt_steps = None
+        
+
+
     bt_settings_dict = {
+        # General
         'strategy': strategy,
         'data_source_s': data_source_s,
         'data_source_b': data_source_b,
         'symbols': symbols,
         'benchmark': benchmark,
+        # Date & Time
         'start_date_time': start_date if periodicity == 'Daily' else datetime.datetime.combine(start_date, start_time),
         'end_date_time': end_date if periodicity == 'Daily' else datetime.datetime.combine(end_date, end_time),
         'periodicity': periodicity,
+        # Cash & Co.
         'start_capital': start_capital,
         'size': size,
         'comission': comission,
-        'risk-free rate': rfr
+        'risk-free rate': rfr,
+        # Optimizer
+        'opt_checkbox': opt_checkbox,
+        'opt_start': opt_start,
+        'opt_end': opt_end,
+        'opt_steps': opt_steps
+
     }
 
     return bt_settings_dict

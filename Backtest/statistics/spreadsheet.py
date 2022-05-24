@@ -102,7 +102,7 @@ class SpreadSheet(object):
 
     def __create_general_info(self):
         """
-        Return DataFrame with general information: Initial Capital, Ending Capital, Net Profit, Net Profit %, Initial Capital, Exposure, Annual Returns %, Transaction Costs
+        Return DataFrame with general information: Initial Capital, Ending Capital, Net Profit, Net Profit %, Ratio Longs, Transaction Costs
 
         Returns:
             pd.DataFrame: General Information DataFrame
@@ -130,7 +130,7 @@ class SpreadSheet(object):
 
     def __create_performance_info(self):
         """
-        Returns DataFrame with performance measurements: Sharpe Ratio, Sortino Ratio, Alpha, Beta
+        Returns DataFrame with performance measurements: Exposure %, Sharpe Ratio, Sortino Ratio, M&M Ratio: RAP, M&M Ratio: rm, Alpha, Beta, CAGR %, MAR, Calmar
 
         Returns:
             pd.DataFrame: Performance measurements DataFrame
@@ -169,7 +169,7 @@ class SpreadSheet(object):
     
     def __create_all_trades(self):
         """
-        Returns DataFrame with info regarding all trades
+        Returns DataFrame with info regarding all trades: Avg. PnL, Avg. PnL %, Avg. Bars Held
 
         Returns:
             pd.DataFrame: Info regarding all trades DataFrame
@@ -180,7 +180,7 @@ class SpreadSheet(object):
         data = {
             'Avg. PnL': trade_history['Return'].mean(),
             'Avg. PnL %': trade_history['Return %'].mean(),
-            'Avg. Bars held': int(self.__trade_history['Bars Held'].mean())
+            'Avg. Bars Held': int(self.__trade_history['Bars Held'].mean())
         }
 
         all_trades = pd.DataFrame.from_dict(data, orient='index')
@@ -189,7 +189,7 @@ class SpreadSheet(object):
 
     def __create_winners(self):
         """
-        Retuns DataFrame with infos about winning trades: Total Profit, Avg. Profit, Avg, Bars Held, Max. Consecutive, Largest Win, Bars in Largest Win
+        Retuns DataFrame with infos about winning trades: Total Profit, Avg. Profit %, Avg, Bars Held, Max. Consecutive, Largest Win, Bars in Largest Win
 
         Returns:
             pd.DataFrame: Infos about winning trades DataFrame

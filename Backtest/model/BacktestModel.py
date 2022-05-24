@@ -28,13 +28,17 @@ class BacktestModel(object):
         self.__date_source_b = view_settings_dict['data_source_b']
         self.__symbol = view_settings_dict['symbols']
         self.__benchmark_symbol = view_settings_dict['benchmark']
+
         self.__start_date_time = view_settings_dict['start_date_time']
         self.__end_date_time = view_settings_dict['end_date_time']
-        self.__start_capital = view_settings_dict['start_capital']
         self.__periodicity = view_settings_dict['periodicity']
+
+        self.__start_capital = view_settings_dict['start_capital']
         self.__size = view_settings_dict['size']
         self.__comission = view_settings_dict['comission']
         self.__rfr = view_settings_dict['risk-free rate']
+
+        self.__parameter = view_settings_dict['parameter']
 
         self.__set_all()
 
@@ -86,8 +90,8 @@ class BacktestModel(object):
         #     self.__end_date_time,
         #     self.__date_source_b)
 
-        self.__master_df_s = run_strategy(self.__strategy, self.__symbol, self.__data_source_s)
-        self.__master_df_b = run_strategy(self.__strategy, self.__benchmark_symbol, self.__data_source_s)
+        self.__master_df_s = run_strategy(self.__strategy, self.__symbol, self.__data_source_s, self.__parameter)
+        self.__master_df_b = run_strategy(self.__strategy, self.__benchmark_symbol, self.__data_source_s, self.__parameter)
 
     def __set_equity(self):
         """
