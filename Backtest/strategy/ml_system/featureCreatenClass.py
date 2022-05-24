@@ -3,9 +3,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.seasonal import seasonal_decompose
 from scipy.stats import pearsonr 
+import scipy.stats as stats
 
-def upper_shadow(df): return df['High'] - np.maximum(df['Close'], df['Open'])
-def lower_shadow(df): return np.minimum(df['Close'], df['Open']) - df['Low']
+
+
+def upper_shadow(df): 
+    return df['High'] - np.maximum(df['Close'], df['Open'])
+
+def lower_shadow(df): 
+    return np.minimum(df['Close'], df['Open']) - df['Low']
 
 def get_features(df, row = False):
     df_feat = df
@@ -17,8 +23,6 @@ def get_features(df, row = False):
     df_feat['mean1'] = (df_feat['shadow5'] + df_feat['shadow3']) / 2
     df_feat['UPS'] = (df_feat['High'] - np.maximum(df_feat['Close'], df_feat['Open']))
     df_feat['LOS'] = (np.minimum(df_feat['Close'], df_feat['Open']) - df_feat['Low'])
-    df_feat['RNG'] = ((df_feat['High'] - df_feat['Low']) / df_feat['VWAP'])
-    df_feat['MOV'] = ((df_feat['Close'] - df_feat['Open']) / df_feat['VWAP'])
     df_feat['LOGVOL'] = np.log(1. + df_feat['Volume'])
     df_feat['LOGCNT'] = np.log(1. + df_feat['Count'])
     if row: df_feat['Mean'] = df_feat[['Open', 'High', 'Low', 'Close']].mean()
@@ -33,12 +37,13 @@ def get_features(df, row = False):
     print(df_feat)
     return df_feat
 
+
+
 def decomposition_noise(df,period=60):
     df_feat = df
     result_mult=seasonal_decompose(df_feat['Close'], model='multiplicative', period=period)
     result_add=seasonal_decompose(np.log(df_feat['Close']), model='additive', period=period)
     df_feat["noise_mult"] = result_mult.resid
-    df_feat["noise_add"] = result_add.resid
     return df_feat
 
 def fft_feature(df):
@@ -48,7 +53,7 @@ def fft_feature(df):
     fft_df['absolute'] = fft_df['fft'].apply(lambda x: np.abs(x))
     fft_df['angle'] = fft_df['fft'].apply(lambda x: np.angle(x))
     fft_list = np.asarray(fft_df['fft'].tolist())
-    for num_ in [5, 10, 50]:
+    for num_ in [5, 15, 50]:
         fft_list= np.copy(fft_list); fft_list[num_:-num_]=0
         df_feat["fft_" + str(num_)] = np.fft.ifft(fft_list).real
     return df_feat
@@ -58,13 +63,6 @@ def tech_analysis(df):
     df_feat = df
     df_feat["MA_20"] = df_feat["Close"].rolling(20).mean()
     df_feat["MA_diff"] = np.log(1+(df_feat.MA_20 - df_feat.Close)/df_feat.Close.shift(1))
-    
-    df_feat["std_kurz"] = df_feat["Close"].rolling(60).std()
-    df_feat["mean_kurz"] = df_feat["Close"].rolling(60).mean()
-
-
-    df_feat['Bollinger_High_urban'] = df_feat["mean_kurz"] + (df_feat["std_kurz"] * 3.5)
-    df_feat ['Bollinger_Low_urban'] = df_feat["mean_kurz"] - (df_feat["std_kurz"] * 0.5) 
     return df_feat
     
 def get_macd(price, slow, fast, smooth):
@@ -85,26 +83,26 @@ def outlier_correction(df):
     
     
 #https://github.com/krishnaik06/Finding-an-Outlier/blob/master/Finding%20an%20outlier%20in%20a%20Dataset.ipynb
-def detect_outliers(data,std_threshold=60):  
+def detect_outliers(data,std_threshold=15):  
     row_names = ["High","Open","Low","Close"]
     df = data
     for column in row_names:
         log_column_name = "Log_" + column
         df[log_column_name] = np.log(1+(df[column]-df[column].shift(1))/df[column].shift(1))
-        # threshold=std_threshold
-        # mean = np.mean(df[log_column_name])
-        # std =np.std(df[log_column_name])
-        # counter = 0
-        # for index, row in df.iterrows():
-        #     if not (row[log_column_name] != row[log_column_name]):
-        #         z_score = (row[log_column_name] - mean)/std 
-        #         if z_score > threshold:
-        #             df.at[index, log_column_name] = (threshold*std)+mean
-        #             counter += 1
-        #         elif z_score < threshold*-1:
-        #             df.at[index, log_column_name] = (-1*threshold*std)+mean
-        #             counter += 1
-    df = df.dropna()
+    df = df.iloc[1: , :]
+    threshold=std_threshold
+    mean = np.mean(df["Log_Close"])
+    std =np.std(df["Log_Close"])
+    df["zscores"] = stats.zscore(df["Log_Close"])
+    counter = 0
+    for index, row in df.iterrows():
+            if row["zscores"] > threshold:
+                data.at[index, "Log_Close"] = (threshold*std)+mean
+                counter += 1
+            elif row["zscores"] < threshold*-1:
+                data.at[index, "Log_Close"] = (-1*threshold*std)+mean
+                counter += 1
+    df["Log_Close"] = df["zscores"]
     return df
 
 def feature_seasonal(df):
@@ -137,11 +135,25 @@ def createFeature(df):
     print("Step 3")
     df_4 = tech_analysis(df_3)
     print("Step 4")
-    df_5 = df_4.join(get_macd(df_4['Close'], 26, 12, 9))
-    df_5 = df_4.dropna()
-    return df_5
+    df_4 = df_4.dropna()
+    return df_4
     
-    # TODO Outlier correction
     
 
 
+def featuresGen(data:pd.DataFrame)->pd.DataFrame:
+    data = createFeature(data)
+    data = data.dropna()
+    data = detect_outliers(data)
+    data = feature_seasonal(data)
+    data = data.dropna()
+    data_label = []
+    for index,value in data["Target"].items():
+        if value < 0:
+            data_label.append(1)
+        elif value > 0:
+            data_label.append(0)
+        else:
+            data_label.append(0)
+    data["Label"] = data_label
+    return data
