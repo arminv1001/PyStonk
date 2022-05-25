@@ -58,6 +58,7 @@ class ml_strat_reg(TradingSystem):
                     else:
                         counter -= 1
             tmpData["Position"] = position_list
-            tmpData = tmpData.iloc[:int(len(tmpData)/10)]
+            tmpData = tmpData.iloc[:int(len(tmpData))]
+            tmpData = tmpData[["Close","Open","High","Low","Volume","Position"]]
             super().setSignalDf(tmpData)
         #print(tmpData)
