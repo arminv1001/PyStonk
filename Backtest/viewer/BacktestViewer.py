@@ -62,7 +62,7 @@ def run_backtest_viewer():
         spreadsheet = model.spreadsheet
         drawdown_df = model.drawdown_df
 
-        view_dashboard(bt_settings_dict, master_df)
+        view_dashboard(bt_settings_dict, master_df) #Dashboard Graph OHLC
         view_trade_history(spreadsheet.trade_history)
         view_charts(equity_df, drawdown_df, master_df['Position'])
         view_spreadsheet(spreadsheet)

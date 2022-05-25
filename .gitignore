@@ -130,3 +130,5 @@ dmypy.json
 
 Broker/LoginData/OandaData_Demo.txt
 Broker/LoginData/OandaDataDemo.txt
+
+Backtest/backtest_data/btc_test.csv
