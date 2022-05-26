@@ -48,7 +48,7 @@ def run_backtest_viewer():
 
     if return_list[0]:
         database_name = return_list[1]
- 
+
         view_dashboard(database_name)
         view_trade_history(database_name)
         view_charts(database_name)
@@ -58,17 +58,17 @@ def run_backtest_viewer():
 
 def get_df_from_database(database_name, table_name, col_names="*"):
 
-    conn = sqlite3.connect(database_name) 
+    conn = sqlite3.connect(database_name)
     c = conn.cursor()
 
     if col_names != '*':
         columns = col_names
         col_names_str = ", ".join(col_names)
-        
+
     else:
         columns = DATABASE_INFO[table_name]
         col_names_str = col_names
-    
+
     c.execute("SELECT " + col_names_str + " FROM " + table_name)
 
     df = pd.DataFrame(c.fetchall(), columns=columns)
@@ -83,7 +83,7 @@ def get_df_from_database(database_name, table_name, col_names="*"):
 
     return df
 
-    
+
 
 def view_optimizer(optimizer):
 
@@ -96,13 +96,13 @@ def view_optimizer(optimizer):
 
     info_key_list = SPREADSHEET_INFOS[info_type]
     info_key = info_key_field.selectbox('Performance Metric', info_key_list, key="<perf_met>")
-        
+
     x_data = optimizer.parameters
     y_data = optimizer.get_info(info_type, info_key)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=x_data, 
+        x=x_data,
         y=y_data,
         name='Optimizer'))
     fig.layout.update(
@@ -144,7 +144,7 @@ def view_charts(database_name):
 
     view_equity(database_name)
     view_drawdown(database_name)
-    
+
 def view_equity(database_name):
     """
     Displays equity information
@@ -154,9 +154,9 @@ def view_equity(database_name):
     """
 
     equity_df = get_df_from_database(database_name, 'equity')
-    
+
     signal_df = get_df_from_database(database_name, 'master_df', ['Date', 'Signal'])
-    
+
     equity_rad = st.radio(
         '', ['percentage %', 'absolute', 'log10 percentage %', 'log10absolute'], key="<equity_rad>")
 
@@ -176,7 +176,7 @@ def view_equity(database_name):
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
-        x=equity_df.index, 
+        x=equity_df.index,
         y=equity_data,
         name='Equity'
         )
@@ -203,7 +203,7 @@ def view_drawdown(database_name):
         drawdown_df (pd DataFrame): drawdown df
         signal_df (pd DataFrame): position df
     """
-    
+
 
     """ dd_rad = st.radio('', ['absolute', 'percentage %'], key="<dd_rad>")
     if dd_rad == 'absolute':
@@ -220,7 +220,7 @@ def view_drawdown(database_name):
     fig.add_trace(go.Scatter(
         x=drawdown_df.index, y=drawdown_data, name='Drawdown'))
     fig.layout.update(
-        title_text='Drawdown', 
+        title_text='Drawdown',
         xaxis_rangeslider_visible=True)
     st.plotly_chart(fig)
 
@@ -241,12 +241,12 @@ def view_spreadsheet(database_name):
     winners = get_df_from_database(database_name, 'winners')
     losers = get_df_from_database(database_name, 'losers')
     runs_info = get_df_from_database(database_name, 'runs_info')
-    
+
     gen_info_col, perf_col = st.columns(2)
     gen_info_col.subheader('General Information')
     perf_col.subheader('Performance')
     gen_info_col.dataframe(general_info)
-    
+
     perf_col.dataframe(performance)
 
     all_trades_col, dd_col = st.columns(2)
@@ -260,7 +260,7 @@ def view_spreadsheet(database_name):
     winner_col.dataframe(winners)
     loser_col.subheader('Losers')
     loser_col.dataframe(losers)
-   
+
 
 def view_dashboard(database_name):
     """
@@ -272,7 +272,7 @@ def view_dashboard(database_name):
     st.header("General Info")
     chart_type= st.selectbox('Select Chart Type', ['OHLC', 'Close'])
 
-    
+
 
     # Create figure with secondary y-axis
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
@@ -373,7 +373,7 @@ def view_sidebar_settings():
     source_list = ['.csv', 'Yahoo Finance']
     data_source_s = st.sidebar.selectbox(
         'Select your System Data Source', source_list, key="<symbol>")
-    
+
 
     if data_source_s == 'Yahoo Finance':
         symbols = st.sidebar.text_input('System Symbol', key="<ds_s>")
@@ -412,10 +412,10 @@ def view_sidebar_settings():
     st.sidebar.header('Optimizer')
     opt_checkbox = st.sidebar.checkbox('Activate')
     opt_start = st.sidebar.number_input('(Start) Parameter')
-    if opt_checkbox: 
+    if opt_checkbox:
         opt_end = st.sidebar.number_input('End Parameter')
         opt_steps = st.sidebar.number_input('Steps')
-    else: 
+    else:
         opt_end = None
         opt_steps = None
 
@@ -427,7 +427,7 @@ def view_sidebar_settings():
     # dd/mm/YY H:M:S
     creation_date = now.strftime("%d_%m_%Y_%H:%M:%S")
 
-    database_name = 'btdb_' + strategy + '_' + creation_date     
+    database_name = 'btdb_' + strategy + '_' + creation_date
 
     bt_settings_dict = {
         # General
@@ -461,7 +461,7 @@ def view_sidebar_settings():
     if st.sidebar.button('Run Backtest'):
 
         bt_settings_dict['parameter'] = bt_settings_dict['opt_start']
-        
+
         # asynchron
         BacktestModel(bt_settings_dict)
 
@@ -486,12 +486,7 @@ def view_sidebar_settings():
     database_name = st.sidebar.selectbox('Available Backtests', backtest_list, key="<hjgjhg>")
 
     if st.sidebar.button('Confirm'):
-        
+
         return [True, database_name]
-    
+
     return [False, database_name]
-
-
-
-
-    

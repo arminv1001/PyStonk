@@ -19,7 +19,7 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
 
     if data_source.startswith('.'):
         filename = symbols + data_source
-        path = os.path.join(CSV_DIR, filename) 
+        path = os.path.join(CSV_DIR, filename)
 
     symbolsNames = []
     alternativDataName = [[path, data_source]]
@@ -29,7 +29,7 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
     broker = None
     timeFrame = ''
 
-    if strategy == 'Moving_Average': 
+    if strategy == 'Moving_Average':
         ma_strategy = Strategy1(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
         ma_strategy.createSignal(parameter)
@@ -37,12 +37,13 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
         ml_strat_reg_model = ml_strat_reg(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
         ml_strat_reg_model.createSignal()
-    
-    
-    signal_df = ma_strategy.getSignalDf()
+        signal_df = ml_strat_reg_model.getSignalDf()
+
+
+
 
     return signal_df
-    
+
 # def run_strategy(master_df, strategy)->pd.DataFrame:
 #     """
 #     Simple function running Moving Average Strategy
@@ -53,7 +54,7 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
 #     Returns:
 #         pd Dataframe: master_df with Signals and Position
 #     """
-    
+
 #     master_df['20_SMA'] = master_df['Close'].rolling(window=20, min_periods=1).mean()
 #     master_df['50_SMA'] = master_df['Close'].rolling(window=50, min_periods=1).mean()
 #     master_df['Signal'] = 0
