@@ -24,10 +24,10 @@ SPREADSHEET_INFOS = {
     'Runs Info': ['HHI on positives', 'HHI on negatives', 'Max DD %', 'Max DD in Bars']
 }
 DATABASE_INFO = {
-    'master_df': ['Date', 'Open' , 'High' , 'Close' , 'Low' , 'Volume' , 'Turnover', 'Dividend', 'Unadjusted Close', 'Signal'],
-    'equity': ['Date', 'Equity', 'Equity %', 'log Equity', 'log Equity %', 'Benchmark', 'Benchmark %', 'log Benchmark', 'log Benchmark %'],
+    'master_df': ['Timestamp', 'Open' , 'High' , 'Close' , 'Low' , 'Volume' , 'Turnover', 'Dividend', 'Unadjusted Close', 'Signal'],
+    'equity': ['Timestamp', 'Equity', 'Equity %', 'log Equity', 'log Equity %', 'Benchmark', 'Benchmark %', 'log Benchmark', 'log Benchmark %'],
     'trade_history': ['Start Date', 'End Date', 'Buy Price', 'Sell Price', 'Return', 'Return %', 'Bars Held', 'Size'],
-    'drawdown': ['Date', 'Drawdown', 'Drawdown %'],
+    'drawdown': ['Timestamp', 'Drawdown', 'Drawdown %'],
 
     'general_info': ['Metric', 'Data'],
     'performance_info': ['Metric', 'Data'],
@@ -77,7 +77,7 @@ def get_df_from_database(database_name, table_name, col_names="*"):
     index_df_list = ['general_info', 'performance_info', 'all_trades_info', 'winners', 'losers', 'runs_info']
 
     if table_name in date_df_list:
-        df = df.set_index('Date')
+        df = df.set_index('Timestamp')
     elif table_name in index_df_list:
         df = df.set_index('Metric')
 
@@ -155,7 +155,7 @@ def view_equity(database_name):
 
     equity_df = get_df_from_database(database_name, 'equity')
 
-    signal_df = get_df_from_database(database_name, 'master_df', ['Date', 'Signal'])
+    signal_df = get_df_from_database(database_name, 'master_df', ['Timestamp', 'Signal'])
 
     equity_rad = st.radio(
         '', ['percentage %', 'absolute', 'log10 percentage %', 'log10absolute'], key="<equity_rad>")
@@ -212,7 +212,7 @@ def view_drawdown(database_name):
         drawdown_data = drawdown_df['Drawdown %'][signal_df < 0] """
 
     drawdown_df = get_df_from_database(database_name, 'drawdown')
-    signal_df = get_df_from_database(database_name, 'master_df', ['Date', 'Signal'])
+    signal_df = get_df_from_database(database_name, 'master_df', ['Timestamp', 'Signal'])
 
     drawdown_data = drawdown_df['Drawdown %'][signal_df['Signal'] < 0]
 
@@ -381,6 +381,7 @@ def view_sidebar_settings():
         #symbols_csv = st.sidebar.multiselect('Symbol', data_list)
         #symbols = [symbol.replace('.csv', '') for symbol in symbols_csv]
         symbols = st.sidebar.text_input('System Symbol', key="<ds_s>")
+
 
     data_source_b = st.sidebar.selectbox(
         'Select your Benchmark Data Source', source_list, key="<benchmark>")

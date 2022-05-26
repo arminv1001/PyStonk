@@ -33,14 +33,14 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
         ma_strategy = Strategy1(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
         ma_strategy.createSignal(parameter)
+        signal_df = ma_strategy.getSignalDf()
+        signal_df = signal_df.rename(columns={'Date': 'Timestamp'})
+        print(signal_df)
     elif strategy == 'ML_Bitcoin':
         ml_strat_reg_model = ml_strat_reg(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
         ml_strat_reg_model.createSignal()
         signal_df = ml_strat_reg_model.getSignalDf()
-
-
-
 
     return signal_df
 

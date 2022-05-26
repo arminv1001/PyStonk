@@ -72,10 +72,10 @@ class BacktestModel(object):
 
         c = conn.cursor()
 
-        c.execute('CREATE TABLE IF NOT EXISTS master_df (Date date, Open number, High number, Close number, Low number, Volume number, Turnover number, Unadjusted_Close number, Dividend number, Signal number)')
-        c.execute('CREATE TABLE IF NOT EXISTS equity (Date date, Equity number, Equity_pct number, log_Equity number, log_Equity_pct number)')
+        c.execute('CREATE TABLE IF NOT EXISTS master_df (Timestamp date, Open number, High number, Close number, Low number, Volume number, Turnover number, Unadjusted_Close number, Dividend number, Signal number)')
+        c.execute('CREATE TABLE IF NOT EXISTS equity (Timestamp date, Equity number, Equity_pct number, log_Equity number, log_Equity_pct number)')
         c.execute('CREATE TABLE IF NOT EXISTS trade_history (Start_Date date, End_Date date, Buy_Price number, Sell_Price number, Return number, Return_pct number, Bars_Held number, Size number)')
-        c.execute('CREATE TABLE IF NOT EXISTS drawdown (Date date, Drawdown number, Drawdown_pct number)')
+        c.execute('CREATE TABLE IF NOT EXISTS drawdown (Timestamp date, Drawdown number, Drawdown_pct number)')
 
         c.execute('CREATE TABLE IF NOT EXISTS general_info (Metric text, Data number)')
         c.execute('CREATE TABLE IF NOT EXISTS performance_info (Metric text, Data number)')
@@ -87,12 +87,12 @@ class BacktestModel(object):
         conn.commit()
         equity_df = self.__equity_df.set_index(self.__master_df_s.index)
         equity_df = self.equity_df.reset_index()
-        equity_df = equity_df.rename(columns={'index': "Date"})
+        equity_df = equity_df.rename(columns={'index': "Timestamp"})
         drawdown_df = self.__drawdown.complete_df.set_index(self.__master_df_s.index)
         drawdown_df = self.drawdown_df.reset_index()
-        drawdown_df = drawdown_df.rename(columns={'index': "Date"})
+        drawdown_df = drawdown_df.rename(columns={'index': "Timestamp"})
         master_df_s = self.__master_df_s.reset_index()
-        master_df_s = master_df_s.rename(columns={'index': "Date"})
+        master_df_s = master_df_s.rename(columns={'index': "Timestamp"})
 
         general_info = self.__spreadsheet.general_info.reset_index()
         performance_info = self.__spreadsheet.performance_info.reset_index()
@@ -147,12 +147,15 @@ class BacktestModel(object):
         #     self.__date_source_b)
 
         self.__master_df_s = run_strategy(self.__strategy, self.__symbol, self.__data_source_s, self.__parameter)
-        self.__master_df_s = self.__master_df_s.set_index('Date')
+        self.__master_df_s = self.__master_df_s.set_index('Timestamp')
         self.__master_df_s.index = pd.to_datetime(self.__master_df_s.index)
 
-        self.__master_df_b = run_strategy(self.__strategy, self.__benchmark_symbol, self.__data_source_s, self.__parameter)
-        self.__master_df_b =  self.__master_df_b.set_index('Date')
-        self.__master_df_b.index = pd.to_datetime(self.__master_df_b.index)
+        if self.__benchmark_symbol == self.__symbol:
+            self.__master_df_b = self.__master_df_s
+        else:
+            self.__master_df_b = run_strategy(self.__strategy, self.__benchmark_symbol, self.__data_source_s, self.__parameter)
+            self.__master_df_b =  self.__master_df_b.set_index('Timestamp')
+            self.__master_df_b.index = pd.to_datetime(self.__master_df_b.index)
 
     def __set_equity(self):
         """
