@@ -111,6 +111,8 @@ class PerformanceMeasurement(object):
 
         periods = PERIODS[period]
 
+        sorted_dd = sorted_dd[sorted_dd!=0]
+
         denominator = np.mean(np.negative(sorted_dd[:N]))
 
         return np.sqrt(periods) * ((np.mean(self.__return_s) -
@@ -130,6 +132,8 @@ class PerformanceMeasurement(object):
         """
 
         periods = PERIODS[period]
+
+        sorted_dd = sorted_dd[sorted_dd!=0]
 
         denominator = np.mean(np.square(np.negative(sorted_dd[:N])))
 

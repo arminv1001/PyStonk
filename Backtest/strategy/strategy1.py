@@ -29,11 +29,11 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
     broker = None
     timeFrame = ''
 
-    if strategy == 'Moving Average': 
+    if strategy == 'Moving_Average': 
         ma_strategy = Strategy1(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
         ma_strategy.createSignal(parameter)
-    elif strategy == 'ML Bitcoin':
+    elif strategy == 'ML_Bitcoin':
         ml_strat_reg_model = ml_strat_reg(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
         ml_strat_reg_model.createSignal()

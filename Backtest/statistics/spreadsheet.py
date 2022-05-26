@@ -3,6 +3,7 @@ import pandas as pd
 from statistics.performance_measurements import *
 from drawdown.Drawdown import *
 from tools.toolbox import *
+from datetime import datetime
 
 PERIODS = {
     "Annually": 12,
@@ -36,9 +37,6 @@ class SpreadSheet(object):
         self.__winners = self.__create_winners()
         self.__losers = self.__create_losers()
 
-        
-        
-        
         # extract out of class
         
 
@@ -58,10 +56,6 @@ class SpreadSheet(object):
     @property
     def all_trades_info(self):
         return self.__all_trades_info
-
-    @property
-    def trade_history(self):
-        return self.__trade_history
 
     @property
     def winners(self):
@@ -296,7 +290,7 @@ class SpreadSheet(object):
             'HHI on - Returns': hhi_negative,
             #'Max. Drawdown': max(self.__drawdown.df),
             'Max. Drawdown %': max_dd_pct,
-            'Max. Drawdown Duration (bars)': max_dd_duration
+            'Max. Drawdown Duration (Bars)': max_dd_duration
         }
         dd = pd.DataFrame.from_dict(data, orient='index')
         dd = dd.rename(columns={0: "Data"})

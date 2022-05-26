@@ -36,7 +36,7 @@ class Equity(object):
         """
 
         equity_df = pd.DataFrame(index=self.__master_df.index)
-        equity_df['Equity'] = self.__capital_df['Capital'][self.__master_df['Position'] < 0]
+        equity_df['Equity'] = self.__capital_df['Capital'][self.__master_df['Signal'] < 0]
         equity_df['Equity'][0] = self.__start_capital
         equity_df = equity_df.ffill()
 
@@ -60,12 +60,12 @@ class Equity(object):
         size = 0
 
         # go through rows where a Position is indicated
-        for index in self.__master_df[self.__master_df['Position'] != 0].index:
+        for index in self.__master_df[self.__master_df['Signal'] != 0].index:
             current_row = self.__master_df.loc[index]
 
-            if self.__size == 0 and current_row['Position'] == 1:
+            if self.__size == 0 and current_row['Signal'] == 1:
                 size = self.__get_size(current_row, old_capital)
-            elif self.__size != 0 and current_row['Position'] == 1:
+            elif self.__size != 0 and current_row['Signal'] == 1:
                 size = self.__size
 
             new_capital = self.__calculate_new_capital(
@@ -108,7 +108,7 @@ class Equity(object):
             float: new capital after trade
         """
 
-        factor = current_row['Position'] # Long: -1, Short: +1
+        factor = current_row['Signal'] # Long: -1, Short: +1
         new_capital = old_capital - factor * \
             (current_row['Close'] * size -
              self.__comission) 

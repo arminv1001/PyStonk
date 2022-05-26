@@ -19,15 +19,18 @@ class Strategy1(TradingSystem):
             tmpData['20_SMA'] = tmpData['Close'].rolling(window=int(parameter), min_periods=1).mean()
             tmpData['50_SMA'] = tmpData['Close'].rolling(window=50, min_periods=1).mean()
             tmpData['Signal'] = 0
-            tmpData['Signal'] = np.where(tmpData['20_SMA'] > tmpData['50_SMA'], 1, 0)
-            tmpData['Position'] = tmpData['Signal'].diff().fillna(0)
+            tmpData['Signal'] = np.where(tmpData['20_SMA'] > tmpData['50_SMA'], -1, 0)
+            tmpData['Signal'] = np.where(tmpData['20_SMA'] < tmpData['50_SMA'], 1, 0)
+            tmpData['Signal'] = tmpData['Signal'].diff().fillna(0)
             columns = ['50_SMA', '20_SMA']
             # Moving Average Crossover Strategy
             #plt.plot(master_df.index, master_df[symbol], color="#425af5")
             #plt.plot(master_df.index, master_df['50_SMA'], color= "#f5b042")
             #plt.plot(master_df.index, master_df['20_SMA'], color= "#f5ef42")
-            tmpData['Short_Signal'] = tmpData['Close'][tmpData['Position'] == -1]
-            tmpData['Long_Signal'] = tmpData['Close'][tmpData['Position'] == 1]
+            tmpData['Short_Signal'] = tmpData['Close'][tmpData['Signal'] == -1]
+            tmpData['Long_Signal'] = tmpData['Close'][tmpData['Signal'] == 1]
             #master_df = master_df.rename(columns={symbol[0]:"Close"})
+            tmpData = tmpData.drop(columns=['20_SMA', '50_SMA', 'Short_Signal', 'Long_Signal'])
+            
         super().setSignalDf(tmpData)
         #print(tmpData)

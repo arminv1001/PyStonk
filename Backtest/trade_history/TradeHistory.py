@@ -3,6 +3,8 @@ import pandas as pd
 
 from tools.toolbox import *
 
+LONG_ONLY = True
+
 
 class TradeHistory(object):
     """
@@ -20,11 +22,12 @@ class TradeHistory(object):
         self.__bars_held = self.__get_bars_held()
         self.__sizes = self.__get_sizes(size)
         
-        
         self.__df = self.__create_trade_history_df()
+
 
     @property
     def df(self):
+        
         return self.__df
 
     def __create_trade_history_df(self):
@@ -79,9 +82,24 @@ class TradeHistory(object):
         Returns:
             np.array: array of long, short & excess dates 
         """
-        positions = self.__master_df['Position']
-        long_dates = np.array(positions[positions == 1].index)
-        short_dates = np.array(positions[positions == -1].index)
+        signals = self.__master_df['Signal']
+        long_dates = np.array(signals[signals == 1].index)
+        short_dates = np.array(signals[signals == -1].index)
+
+
+        if LONG_ONLY:
+            # first position must be long and before first short date
+            i = 0
+
+            if long_dates[0] > short_dates[0]:
+                for date in short_dates:
+                    if date > long_dates[0]:
+                        i += 1
+                    else:
+                        break
+
+                short_dates = np.delete(short_dates, np.s_[:i+1])
+
 
         long_dates_list = None
         short_dates_list = None
