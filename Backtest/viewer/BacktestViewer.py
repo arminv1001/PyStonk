@@ -1,4 +1,5 @@
 from model.BacktestModel import *
+from exporter.Exporter import *
 from optimizer.Optimizer import *
 from tools.toolbox import *
 from os import listdir
@@ -54,34 +55,6 @@ def run_backtest_viewer():
         view_charts(database_name)
         view_spreadsheet(database_name)
         # view_optimizer(optimizer)
-
-
-def get_df_from_database(database_name, table_name, col_names="*"):
-
-    conn = sqlite3.connect(database_name)
-    c = conn.cursor()
-
-    if col_names != '*':
-        columns = col_names
-        col_names_str = ", ".join(col_names)
-
-    else:
-        columns = DATABASE_INFO[table_name]
-        col_names_str = col_names
-
-    c.execute("SELECT " + col_names_str + " FROM " + table_name)
-
-    df = pd.DataFrame(c.fetchall(), columns=columns)
-
-    date_df_list = ['master_df', 'equity', 'drawdown']
-    index_df_list = ['general_info', 'performance_info', 'all_trades_info', 'winners', 'losers', 'runs_info']
-
-    if table_name in date_df_list:
-        df = df.set_index('Timestamp')
-    elif table_name in index_df_list:
-        df = df.set_index('Metric')
-
-    return df
 
 
 
@@ -162,7 +135,7 @@ def view_equity(database_name):
 
     if equity_rad == 'absolute':
         equity_data = equity_df['Equity'][signal_df['Signal'] < 0]
-        benchmark_data = equity_df['Benchmark'][signal_df < 0]
+        benchmark_data = equity_df['Benchmark'][signal_df['Signal'] < 0]
     elif equity_rad == 'percentage %':
         equity_data = equity_df['Equity %'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['Benchmark %'][signal_df['Signal'] < 0]
@@ -170,8 +143,8 @@ def view_equity(database_name):
         equity_data = equity_df['log Equity %'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['log Benchmark %'][signal_df['Signal'] < 0]
     elif equity_rad == 'log10 absolute':
-        equity_data = equity_df['log Equity'][signal_df < 0]
-        benchmark_data = equity_df['log Benchmark'][signal_df < 0]
+        equity_data = equity_df['log Equity'][signal_df['Signal'] < 0]
+        benchmark_data = equity_df['log Benchmark'][signal_df['Signal'] < 0]
 
     fig = go.Figure()
 
@@ -463,7 +436,6 @@ def view_sidebar_settings():
 
         bt_settings_dict['parameter'] = bt_settings_dict['opt_start']
 
-        # asynchron
         BacktestModel(bt_settings_dict)
 
     elif st.sidebar.button('Run Backtest with Optimizer'):
@@ -485,9 +457,19 @@ def view_sidebar_settings():
 
     backtest_list = [f for f in listdir(dir) if isfile(join(dir, f)) and f.startswith("btdb")]
     database_name = st.sidebar.selectbox('Available Backtests', backtest_list, key="<hjgjhg>")
+    
+    show_bool = st.sidebar.button('Show')
+    export_bool = st.sidebar.button('Export')
 
-    if st.sidebar.button('Confirm'):
+    if show_bool:
 
         return [True, database_name]
+    
+    elif export_bool:
+
+        exporter = Exporter(database_name)
+        exporter.create_exports()
+
+
 
     return [False, database_name]

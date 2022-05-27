@@ -147,15 +147,15 @@ class BacktestModel(object):
         #     self.__date_source_b)
 
         self.__master_df_s = run_strategy(self.__strategy, self.__symbol, self.__data_source_s, self.__parameter)
-        self.__master_df_s = self.__master_df_s.set_index('Timestamp')
-        self.__master_df_s.index = pd.to_datetime(self.__master_df_s.index)
+
+        print(787878)
+        print(self.__master_df_s)
 
         if self.__benchmark_symbol == self.__symbol:
             self.__master_df_b = self.__master_df_s
         else:
             self.__master_df_b = run_strategy(self.__strategy, self.__benchmark_symbol, self.__data_source_s, self.__parameter)
-            self.__master_df_b =  self.__master_df_b.set_index('Timestamp')
-            self.__master_df_b.index = pd.to_datetime(self.__master_df_b.index)
+            
 
     def __set_equity(self):
         """
