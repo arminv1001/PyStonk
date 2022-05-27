@@ -8,7 +8,7 @@ from joblib import load
 class ml_strat_reg_kla(TradingSystem):
     def __init__(self, symbolsNames: list, alternativDataNames: list, systemName: str, systemType: str, systemStyle: int, broker: Broker, timeFrame: str, weekendTrading: bool = False, lookback_candels: int = None):
         super().__init__(symbolsNames, alternativDataNames, systemName, systemType, systemStyle, broker, timeFrame, weekendTrading, lookback_candels)
-        self.model = load_model('Regression/Models/1_lstm_V3_class_test.h5')
+        self.model = load_model('TradingSystems/ml_system/1_lstm_V3_class_test.h5')
         
     def createSignal(self, lookback_period=-1):
         tmpData = super().getDatenHandler().getData()
@@ -17,14 +17,12 @@ class ml_strat_reg_kla(TradingSystem):
         else:
             tmpData.index = pd.to_datetime(tmpData["timestamp"])
             tmpData_features = featuresGen(tmpData)
-            tmpData_features = tmpData_features.drop(["timestamp", "zscores","Target","Label","Asset_ID","index","Open","High","Low","Close","Volume"], axis=1).reset_index(drop=True)
+            tmpData_features = tmpData_features.drop(["timestamp", "zscores","Target","Label","Asset_ID","index","Open","High","Low","Close"], axis=1).reset_index(drop=True)
             tmpData_features.index = tmpData_features.index.astype("int")
             tmpData_features = tmpData_features[['Count', 'Volume', 'noise_mult', 'fft_5', 'fft_15', 'fft_50', 'MA_20', 'MA_diff', 'Log_High', 'Log_Open', 'Log_Low', 'Log_Close', 'Minute',
                                                     'Day', 'Month', 'Year', 'DayOfWeek', 'minute_seasonal',
                                                     'correlation_log_perf']]
-            std_series = tmpData_features["Log_Close"].rolling(15).std()
-            std_series = std_series.dropna()
-            tmpData_features = tmpData_features.iloc[16:]
+            
             n_future = 1 #Naechste 15min prädizieren
             n_past = 16
             train_x = []
@@ -35,8 +33,9 @@ class ml_strat_reg_kla(TradingSystem):
             diff_len = len(tmpData) - len(trainPredict)
             tmpData = tmpData.iloc[diff_len:,]
             tmpData["Label"] = np.around(trainPredict)
-            tmpData["std"] = std_series
-            reg_lg = load("TradingSystems/ml_stem/lg.sav")
+            tmpData["std"] =  np.log(1+(tmpData["Close"]-tmpData["Close"].shift(1))/tmpData["Close"].shift(1)).rolling(15).std()
+            tmpData = tmpData.dropna()
+            reg_lg = load("TradingSystems/ml_system/lg.sav")
             pred = reg_lg.predict(tmpData[["std","Label"]])
             tmpData["Target"] = pred
             # Tradingsystem

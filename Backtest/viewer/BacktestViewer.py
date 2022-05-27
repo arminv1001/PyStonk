@@ -15,7 +15,7 @@ import streamlit as st
 import os
 from datetime import datetime
 
-STRATEGY_LIST = ['Moving_Average', 'ML_Bitcoin']
+STRATEGY_LIST = ['Moving_Average', 'ML_reg_Bitcoin','ML_class_reg_Bitcoin']
 SPREADSHEET_INFOS = {
     'General': ['Initial Capital', 'Ending Capital', 'Net Profit', 'Net Profit %', 'Ratio Longs', 'Transaction Costs'],
     'Performance': ['Exposure %', 'Sharpe Ratio', 'Sortino Ratio', 'M&M Ratio: RAP', 'M&M Ratio: rm', 'Alpha', 'Beta', 'CAGR %', 'MAR', 'Calmar'],
