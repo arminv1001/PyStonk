@@ -18,15 +18,17 @@ class PerformanceMeasurement(object):
 
     """
 
-    def __init__(self, equity_df, trade_history_s, trade_history_b, periodicity, rfr):
+    def __init__(self, equity_df, trade_history_s, trade_history_b, periodicity, benchmark_active, rfr):
 
         self.__equity_df = equity_df
         self.__trade_history_s = trade_history_s
         self.__trade_history_b = trade_history_b
         self.__return_s = self.__trade_history_s['Return %'].to_numpy()
-        self.__return_b = self.__trade_history_b['Return %'].to_numpy()
+        self.__return_b = self.__trade_history_b['Return %'].to_numpy() if benchmark_active else None 
         self.__periodicity = periodicity
+        self.__benchmark_active = benchmark_active
         self.__rfr = rfr # risk-free rate
+
 
     def calculate_sharpe_ratio(self, period="Annually"):
         """
@@ -41,12 +43,7 @@ class PerformanceMeasurement(object):
         """
         periods = PERIODS[period]
 
-        return_s, return_b, excess_list = get_equal_len_list(
-            self.__return_s, self.__return_b)
-        
-        d = return_s - return_b
-
-        return np.sqrt(periods) * ((np.mean(d)) / np.std(return_s))
+        return np.sqrt(periods) * ((np.mean(self.__return_s)-self.__rfr) / np.std(self.__return_s))
 
     def calculate_sortino_ratio(self, period="Annually"):
         """
@@ -61,15 +58,8 @@ class PerformanceMeasurement(object):
         """
 
         periods = PERIODS[period]
-        
-        return_s, return_b, excess_list = get_equal_len_list(
-            self.__return_s, self.__return_b)
 
-        d = return_s - return_b
-
-        rfr = 0  # risk-free rate
-
-        return np.sqrt(periods) * ((np.mean(d)) / np.std(return_s[return_s < 0]))
+        return np.sqrt(periods) * ((np.mean(self.__return_s) - self.__rfr) / np.std(self.__return_s[self.__return_s < 0]))
 
     def calculate_mm_ratio(self, period="Annually"):
         """
@@ -83,17 +73,24 @@ class PerformanceMeasurement(object):
             float: Modigliani and Modigliani Ratio
         """
 
-        periods = PERIODS[period]
+        if self.__benchmark_active:
 
-        return_s, return_b, excess_list = get_equal_len_list(
-            self.__return_s, self.__return_b)
+            periods = PERIODS[period]
 
-        d_s = np.mean(return_s) - self.__rfr
-        d_b = np.mean(return_b) - self.__rfr
-        fraq = np.std(return_s) / np.std(return_b)
+            return_s, return_b, excess_list = get_equal_len_list(
+                self.__return_s, self.__return_b)
 
-        rap = np.sqrt(periods) * fraq * d_s + self.__rfr
-        rm = np.sqrt(periods) * fraq * d_b + self.__rfr
+            d_s = np.mean(return_s) - self.__rfr
+            d_b = np.mean(return_b) - self.__rfr
+            fraq = np.std(return_s) / np.std(return_b)
+
+            rap = np.sqrt(periods) * fraq * d_s + self.__rfr
+            rm = np.sqrt(periods) * fraq * d_b + self.__rfr
+
+        else: 
+
+            rap = np.nan
+            rm = np.nan
 
         return rap, rm
 
@@ -190,14 +187,21 @@ class PerformanceMeasurement(object):
             float: alpha, beta
         """
 
-        return_s, return_b, excess_list = get_equal_len_list(
-            self.__return_s, self.__return_b)
+        if self.__benchmark_active:
 
-        numerator = np.cov(return_s.astype(
-            float), return_b.astype(float))
-        denumerator = np.var(return_b)
-        beta = numerator[0][0] / denumerator
-        alpha = return_s.mean() - beta * return_b.mean()
+            return_s, return_b, excess_list = get_equal_len_list(
+                self.__return_s, self.__return_b)
+            numerator = np.cov(return_s.astype(
+                float), return_b.astype(float))
+            denumerator = np.var(return_b)
+            beta = numerator[0][0] / denumerator
+            alpha = return_s.mean() - beta * return_b.mean()
+
+        else:
+
+            beta = np.nan
+            alpha = np.nan
+
         return beta, alpha
 
     def calculate_hhi(self, returns):

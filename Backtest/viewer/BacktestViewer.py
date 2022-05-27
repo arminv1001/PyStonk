@@ -146,10 +146,13 @@ def view_equity(database_name):
         equity_data = equity_df['log Equity'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['log Benchmark'][signal_df['Signal'] < 0]
 
+    print(equity_data)
+
+
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
-        x=equity_df.index,
+        x=equity_data.index,
         y=equity_data,
         name='Equity'
         )
@@ -157,14 +160,17 @@ def view_equity(database_name):
 
     fig.add_trace(
         go.Scatter(
-            x=equity_df.index,
+            x=equity_data.index,
             y=benchmark_data,
             name='Benchmark Performance'
         )
     )
 
     fig.layout.update(title_text='Equity',
-                        xaxis_rangeslider_visible=True)
+                        xaxis_rangeslider_visible=True,
+                        showlegend=False
+                        )
+
     st.plotly_chart(fig)
 
 
@@ -191,7 +197,7 @@ def view_drawdown(database_name):
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=drawdown_df.index, y=drawdown_data, name='Drawdown'))
+        x=drawdown_data.index, y=drawdown_data, name='Drawdown'))
     fig.layout.update(
         title_text='Drawdown',
         xaxis_rangeslider_visible=True)
@@ -340,12 +346,14 @@ def view_sidebar_settings():
     """
 
     # General
-    st.sidebar.header('General')
+    st.sidebar.header('Trading System')
     strategy = st.sidebar.selectbox(
         'Choose your strategy', STRATEGY_LIST)
     source_list = ['.csv', 'Yahoo Finance']
     data_source_s = st.sidebar.selectbox(
         'Select your System Data Source', source_list, key="<symbol>")
+    data_source_b = None
+    benchmark = None
 
 
     if data_source_s == 'Yahoo Finance':
@@ -355,16 +363,20 @@ def view_sidebar_settings():
         #symbols = [symbol.replace('.csv', '') for symbol in symbols_csv]
         symbols = st.sidebar.text_input('System Symbol', key="<ds_s>")
 
+    st.sidebar.header('Benchmark')
+    benchmark_active = st.sidebar.checkbox('Active')
 
-    data_source_b = st.sidebar.selectbox(
-        'Select your Benchmark Data Source', source_list, key="<benchmark>")
+    if benchmark_active:
 
-    if data_source_b == 'Yahoo Finance':
-        benchmark = st.sidebar.text_input('Benchmark Symbol', key="<ds_b>")
-    elif data_source_b == '.csv':
-        #benchmark_csv = st.sidebar.multiselect('Benchmark', data_list)
-        #benchmark = [symbol.replace('.csv', '') for symbol in benchmark_csv]
-        benchmark = st.sidebar.text_input('Benchmark Symbol', key="<ds_b>")
+        data_source_b = st.sidebar.selectbox(
+            'Select your Benchmark Data Source', source_list, key="<benchmark>")
+
+        if data_source_b == 'Yahoo Finance':
+            benchmark = st.sidebar.text_input('Benchmark Symbol', key="<ds_b>")
+        elif data_source_b == '.csv':
+            #benchmark_csv = st.sidebar.multiselect('Benchmark', data_list)
+            #benchmark = [symbol.replace('.csv', '') for symbol in benchmark_csv]
+            benchmark = st.sidebar.text_input('Benchmark Symbol', key="<ds_b>")
 
     # Date & Time
     st.sidebar.header('Date & Time')
@@ -410,6 +422,7 @@ def view_sidebar_settings():
         'data_source_s': data_source_s,
         'data_source_b': data_source_b,
         'symbols': symbols,
+        'benchmark_active': benchmark_active,
         'benchmark': benchmark,
         # Date & Time
         'start_date_time': start_date if periodicity == 'Daily' else datetime.combine(start_date, start_time),
@@ -438,6 +451,8 @@ def view_sidebar_settings():
 
         BacktestModel(bt_settings_dict)
 
+        st.header('Backtest finished')
+
     elif st.sidebar.button('Run Backtest with Optimizer'):
 
         optimizer = Optimizer(bt_settings_dict)
@@ -446,6 +461,8 @@ def view_sidebar_settings():
 
         models = optimizer.models
         model = models[parameter]
+
+        st.header('Backtest with Optimizer finished')
 
         return [True, database_name]
 
@@ -467,8 +484,9 @@ def view_sidebar_settings():
     
     elif export_bool:
 
-        exporter = Exporter(database_name)
+        exporter = Exporter(database_name, benchmark_active)
         exporter.create_exports()
+        st.header('Backtest Export finished')
 
 
 

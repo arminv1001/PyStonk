@@ -30,6 +30,7 @@ class BacktestModel(object):
         self.__data_source_s = view_settings_dict['data_source_s']
         self.__date_source_b = view_settings_dict['data_source_b']
         self.__symbol = view_settings_dict['symbols']
+        self.__benchmark_active = view_settings_dict['benchmark_active']
         self.__benchmark_symbol = view_settings_dict['benchmark']
 
         self.__start_date_time = view_settings_dict['start_date_time']
@@ -148,10 +149,9 @@ class BacktestModel(object):
 
         self.__master_df_s = run_strategy(self.__strategy, self.__symbol, self.__data_source_s, self.__parameter)
 
-        print(787878)
-        print(self.__master_df_s)
-
-        if self.__benchmark_symbol == self.__symbol:
+        if not self.__benchmark_active:
+            self.__master_df_b = None
+        elif self.__benchmark_symbol == self.__symbol:
             self.__master_df_b = self.__master_df_s
         else:
             self.__master_df_b = run_strategy(self.__strategy, self.__benchmark_symbol, self.__data_source_s, self.__parameter)
@@ -169,23 +169,29 @@ class BacktestModel(object):
             self.__comission,
             self.__size)
 
-        self.__equity_b = Equity(
+        self.__equity_df = self.__equity_s.df
+
+        if self.__benchmark_active:
+
+            self.__equity_b = Equity(
             self.__benchmark_symbol,
             self.__master_df_b[['Close', 'Signal']],
             self.__start_capital,
             self.__comission,
             self.__size)
 
-        self.__equity_df = self.__equity_s.df
-        self.__equity_df['Benchmark'] = self.__equity_s.df['Equity'] - \
-            self.__equity_b.df['Equity']
-        self.__equity_df['Benchmark %'] = self.__equity_s.df['Equity %'] - self.__equity_b.df['Equity %']
-        self.__equity_df['log Benchmark'] = self.__equity_s.df['log Equity'] - \
-            self.__equity_b.df['log Equity']
-        self.__equity_df['log Benchmark %'] = self.__equity_s.df['log Equity %'] - \
-            self.__equity_b.df['log Equity %']
-
-
+            self.__equity_df['Benchmark'] = self.__equity_s.df['Equity'] - \
+                self.__equity_b.df['Equity']
+            self.__equity_df['Benchmark %'] = self.__equity_s.df['Equity %'] - self.__equity_b.df['Equity %']
+            self.__equity_df['log Benchmark'] = self.__equity_s.df['log Equity'] - \
+                self.__equity_b.df['log Equity']
+            self.__equity_df['log Benchmark %'] = self.__equity_s.df['log Equity %'] - \
+                self.__equity_b.df['log Equity %']
+        else:
+            self.__equity_df['Benchmark'] = np.nan
+            self.__equity_df['Benchmark %'] = np.nan
+            self.__equity_df['log Benchmark'] = np.nan
+            self.__equity_df['log Benchmark %'] = np.nan
         
     def __set_trade_histories(self):
         """
@@ -197,10 +203,19 @@ class BacktestModel(object):
             self.__equity_s.complete_df,
             self.__size)
 
-        self.__trade_history_b = TradeHistory(
+        if self.__benchmark_active:
+
+            self.__trade_history_b = TradeHistory(
             self.__master_df_b[['Close','Signal']],
             self.__equity_b.complete_df,
             self.__size)
+
+            self.__trade_history_b_df = self.__trade_history_b.df
+
+        else:
+
+            self.__trade_history_b_df = None
+
 
     def __set_drawdown(self):
         """
@@ -218,8 +233,9 @@ class BacktestModel(object):
         self.__performance_measurement = PerformanceMeasurement(
             self.__equity_s.df,
             self.__trade_history_s.df,
-            self.__trade_history_b.df,
+            self.__trade_history_b_df,
             self.__periodicity,
+            self.__benchmark_active,
             self.__rfr
         )
         

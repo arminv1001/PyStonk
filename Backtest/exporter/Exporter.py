@@ -16,8 +16,9 @@ class Exporter(object):
 
     """
 
-    def __init__(self, database_name):
+    def __init__(self, database_name, benchmark_active):
         self.__database_name = database_name
+        self.__benchmark_active = benchmark_active
         self.__dir = os.path.abspath(os.curdir) + '/export' +  '/' + self.__database_name
         os.makedirs(self.__dir)
 
@@ -79,24 +80,35 @@ class Exporter(object):
         signal_df = get_df_from_database(self.__database_name, 'master_df', ['Timestamp', 'Signal'])
 
         equity_data = equity_df['Equity'][signal_df['Signal'] < 0]
-        benchmark_data = equity_df['Benchmark'][signal_df['Signal'] < 0]
+        equity_pct_data = equity_df['Equity %'][signal_df['Signal'] < 0]
+        equity_log_data = equity_df['log Equity'][signal_df['Signal'] < 0]
+        equity_log_pct_data = equity_df['log Equity %'][signal_df['Signal'] < 0]
+        
+
+        if self.__benchmark_active:
+            benchmark_data = equity_df['Benchmark'][signal_df['Signal'] < 0]
+            benchmark_pct_data = equity_df['Benchmark %'][signal_df['Signal'] < 0]
+            benchmark_log_data = equity_df['log Benchmark'][signal_df['Signal'] < 0]
+            benchmark_log_pct_data = equity_df['log Benchmark %'][signal_df['Signal'] < 0]
+
 
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
-            x=equity_df.index,
+            x=equity_data.index,
             y=equity_data,
             name='Equity'
             )
         )
 
-        fig.add_trace(
-            go.Scatter(
-                x=equity_df.index,
-                y=benchmark_data,
-                name='Benchmark Performance'
+        if self.__benchmark_active:
+            fig.add_trace(
+                go.Scatter(
+                    x=equity_df.index,
+                    y=benchmark_data,
+                    name='Benchmark Performance'
+                )
             )
-        )
 
         fig.layout.update(title_text='Equity',
                             xaxis_rangeslider_visible=True)
@@ -104,25 +116,23 @@ class Exporter(object):
         fig.write_html(dir_temp + "/equity.html")
         fig.write_image(dir_temp + "/equity.png")
 
-        equity_pct_data = equity_df['Equity %'][signal_df['Signal'] < 0]
-        benchmark_pct_data = equity_df['Benchmark %'][signal_df['Signal'] < 0]
-
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
-            x=equity_df.index,
+            x=equity_pct_data.index,
             y=equity_pct_data,
             name='Equity'
             )
         )
 
-        fig.add_trace(
-            go.Scatter(
-                x=equity_df.index,
-                y=benchmark_pct_data,
-                name='Benchmark Performance'
+        if self.__benchmark_active:
+            fig.add_trace(
+                go.Scatter(
+                    x=equity_df.index,
+                    y=benchmark_pct_data,
+                    name='Benchmark Performance'
+                )
             )
-        )
 
         fig.layout.update(title_text='Equity %',
                             xaxis_rangeslider_visible=True)
@@ -130,25 +140,23 @@ class Exporter(object):
         fig.write_html(dir_temp + "/equity_pct.html")
         fig.write_image(dir_temp + "/equity_pct.png")
 
-        equity_log_data = equity_df['log Equity'][signal_df['Signal'] < 0]
-        benchmark_log_data = equity_df['log Benchmark'][signal_df['Signal'] < 0]
-
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
-            x=equity_df.index,
+            x=equity_log_data.index,
             y=equity_log_data,
             name='Equity'
             )
         )
 
-        fig.add_trace(
-            go.Scatter(
-                x=equity_df.index,
-                y=benchmark_log_data,
-                name='Benchmark Performance'
+        if self.__benchmark_active:
+            fig.add_trace(
+                go.Scatter(
+                    x=equity_df.index,
+                    y=benchmark_log_data,
+                    name='Benchmark Performance'
+                )
             )
-        )
 
         fig.layout.update(title_text='Equity %',
                             xaxis_rangeslider_visible=True)
@@ -156,25 +164,23 @@ class Exporter(object):
         fig.write_html(dir_temp + "/equity_log.html")
         fig.write_image(dir_temp + "/equity_log.png")
 
-        equity_log_pct_data = equity_df['log Equity %'][signal_df['Signal'] < 0]
-        benchmark_log_pct_data = equity_df['log Benchmark %'][signal_df['Signal'] < 0]
-
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
-            x=equity_df.index,
+            x=equity_log_pct_data.index,
             y=equity_log_pct_data,
             name='Equity'
             )
         )
 
-        fig.add_trace(
-            go.Scatter(
-                x=equity_df.index,
-                y=benchmark_log_pct_data,
-                name='Benchmark Performance'
+        if self.__benchmark_active:
+            fig.add_trace(
+                go.Scatter(
+                    x=equity_df.index,
+                    y=benchmark_log_pct_data,
+                    name='Benchmark Performance'
+                )
             )
-        )
 
         fig.layout.update(title_text='Equity %',
                             xaxis_rangeslider_visible=True)
@@ -191,7 +197,7 @@ class Exporter(object):
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=drawdown_df.index, y=drawdown_data, name='Drawdown'))
+            x=drawdown_data.index, y=drawdown_data, name='Drawdown'))
         fig.layout.update(
             title_text='Drawdown',
             xaxis_rangeslider_visible=True)

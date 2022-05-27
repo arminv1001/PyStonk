@@ -31,7 +31,7 @@ class Strategy1(TradingSystem):
             tmpData['Short_Signal'] = tmpData['Close'][tmpData['Signal'] == -1]
             tmpData['Long_Signal'] = tmpData['Close'][tmpData['Signal'] == 1]
             #master_df = master_df.rename(columns={symbol[0]:"Close"})
-            tmpData = tmpData[["Date", "Close","Open","High","Low","Volume","Signal"]]
+            tmpData = tmpData[["Date", "Close", "Open", "High", "Low", "Volume", "Signal"]]
 
             tmpData = tmpData.rename(columns={'Date': 'Timestamp'})
             tmpData = tmpData.set_index('Timestamp')
