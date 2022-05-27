@@ -14,9 +14,9 @@ class ml_strat_reg(TradingSystem):
         if lookback_period > 0:
             tmpData.tail(lookback_period)
         else:
-            tmpData.index = pd.to_datetime(tmpData["Timestamp"])
+            tmpData.index = pd.to_datetime(tmpData["timestamp"])
             tmpData_features = featuresGen(tmpData)
-            tmpData_features = tmpData_features.drop(["Timestamp","zscores","Target","Label","Asset_ID","index","Open","High","Low","Close","Volume"], axis=1).reset_index(drop=True)
+            tmpData_features = tmpData_features.drop(["timestamp","zscores","Target","Label","Asset_ID","index","Open","High","Low","Close","Volume"], axis=1).reset_index(drop=True)
             tmpData_features.index = tmpData_features.index.astype("int")
             #TODO drop features - Low,Close,Open,High
             #TODO sequenzierung
@@ -59,8 +59,6 @@ class ml_strat_reg(TradingSystem):
                         counter -= 1
             tmpData["Position"] = position_list
             tmpData = tmpData.iloc[:int(len(tmpData))]
-            tmpData = tmpData.set_index("Timestamp")
             tmpData = tmpData[["Close","Open","High","Low","Volume","Position"]]
-            
             super().setSignalDf(tmpData)
         #print(tmpData)
