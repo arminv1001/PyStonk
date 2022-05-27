@@ -1,3 +1,11 @@
+@khiemjannguyen
+khiemjannguyen added Exporter
+Latest commit 055942a 3 hours ago
+ History
+ 2 contributors
+@arminv1001@khiemjannguyen
+68 lines (63 sloc)  3.37 KB
+   
 from TradingSystems.TradingSystem import TradingSystem
 from TradingSystems.featureCreatenClass import featuresGen
 from keras.models import load_model
@@ -16,10 +24,7 @@ class ml_strat_reg(TradingSystem):
         else:
             tmpData.index = pd.to_datetime(tmpData["timestamp"])
             tmpData_features = featuresGen(tmpData)
-<<<<<<< HEAD
-=======
             tmpData_features = tmpData_features.drop(["timestamp", "zscores","Target","Label","Asset_ID","index","Open","High","Low","Close","Volume"], axis=1).reset_index(drop=True)
->>>>>>> 646025431c1814783a8ab6674323aebb0d18862a
             tmpData_features.index = tmpData_features.index.astype("int")
             #TODO drop features - Low,Close,Open,High
             #TODO sequenzierung
@@ -62,14 +67,9 @@ class ml_strat_reg(TradingSystem):
                         counter -= 1
             tmpData["Signal"] = position_list
             tmpData = tmpData.iloc[:int(len(tmpData))]
-<<<<<<< HEAD
-            tmpData = tmpData[["Close","Open","High","Low","Volume","Position"]]
-=======
             tmpData = tmpData[["Close","Open","High","Low","Volume","Signal", "timestamp"]]
             tmpData = tmpData.set_index('timestamp')
             tmpData.index = pd.to_datetime(tmpData.index)
 
             
->>>>>>> 646025431c1814783a8ab6674323aebb0d18862a
             super().setSignalDf(tmpData)
-        #print(tmpData)
