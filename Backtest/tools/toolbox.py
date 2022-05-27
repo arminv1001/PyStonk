@@ -1,10 +1,49 @@
 import numpy as np
 import pandas as pd
 import os
+import sqlite3
 
 PATH = os.path.abspath(os.curdir)
+DATABASE_INFO = {
+    'master_df': ['Timestamp', 'Open' , 'High' , 'Close' , 'Low' , 'Volume' , 'Signal'],
+    'equity': ['Timestamp', 'Equity', 'Equity %', 'log Equity', 'log Equity %', 'Benchmark', 'Benchmark %', 'log Benchmark', 'log Benchmark %'],
+    'trade_history': ['Start Date', 'End Date', 'Buy Price', 'Sell Price', 'Return', 'Return %', 'Bars Held', 'Size'],
+    'drawdown': ['Timestamp', 'Drawdown', 'Drawdown %'],
 
+    'general_info': ['Metric', 'Data'],
+    'performance_info': ['Metric', 'Data'],
+    'all_trades_info': ['Metric', 'Data'],
+    'winners': ['Metric', 'Data'],
+    'losers': ['Metric', 'Data'],
+    'runs_info': ['Metric', 'Data']
+}
 
+def get_df_from_database(database_name, table_name, col_names="*"):
+
+    conn = sqlite3.connect(database_name)
+    c = conn.cursor()
+
+    if col_names != '*':
+        columns = col_names
+        col_names_str = ", ".join(col_names)
+
+    else:
+        columns = DATABASE_INFO[table_name]
+        col_names_str = col_names
+
+    c.execute("SELECT " + col_names_str + " FROM " + table_name)
+
+    df = pd.DataFrame(c.fetchall(), columns=columns)
+
+    date_df_list = ['master_df', 'equity', 'drawdown']
+    index_df_list = ['general_info', 'performance_info', 'all_trades_info', 'winners', 'losers', 'runs_info']
+
+    if table_name in date_df_list:
+        df = df.set_index('Timestamp')
+    elif table_name in index_df_list:
+        df = df.set_index('Metric')
+
+    return df
 
 def color_win_loss(val):
     """

@@ -1,8 +1,9 @@
 from TradingSystems.TradingSystem import TradingSystem
-
-
 from Broker import Broker
+
 import numpy as np
+import pandas as pd
+
 class Strategy1(TradingSystem):
     def __init__(self, symbolsNames: list, alternativDataNames: list, systemName: str, systemType: str, systemStyle: int, broker: Broker, timeFrame: str, weekendTrading: bool = False, lookback_candels: int = None):
         super().__init__(symbolsNames, alternativDataNames, systemName, systemType, systemStyle, broker, timeFrame, weekendTrading, lookback_candels)
@@ -30,10 +31,13 @@ class Strategy1(TradingSystem):
             tmpData['Short_Signal'] = tmpData['Close'][tmpData['Signal'] == -1]
             tmpData['Long_Signal'] = tmpData['Close'][tmpData['Signal'] == 1]
             #master_df = master_df.rename(columns={symbol[0]:"Close"})
-            tmpData = tmpData[["Date", "Close","Open","High","Low","Volume","Position"]]
+            tmpData = tmpData[["Date", "Close","Open","High","Low","Volume","Signal"]]
 
             tmpData = tmpData.rename(columns={'Date': 'Timestamp'})
+            tmpData = tmpData.set_index('Timestamp')
+            tmpData.index = pd.to_datetime(tmpData.index)
 
+            
             
         super().setSignalDf(tmpData)
         #print(tmpData)
