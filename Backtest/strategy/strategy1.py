@@ -15,6 +15,7 @@ import os
 sys.path.append('.')
 from TradingSystems.Strategy1 import Strategy1
 from TradingSystems.ml_stra import ml_strat_reg
+from TradingSystems.ml_strat_reg_kla import ml_strat_reg_kla
 
 def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
 
@@ -36,8 +37,14 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
         ma_strategy.createSignal(parameter)
         signal_df = ma_strategy.getSignalDf()
 
-    elif strategy == 'ML_Bitcoin':
+    elif strategy == 'ML_reg_Bitcoin':
         ml_strat_reg_model = ml_strat_reg(
+            symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
+        ml_strat_reg_model.createSignal()
+        signal_df = ml_strat_reg_model.getSignalDf()
+    
+    elif strategy == 'ML_class_reg_Bitcoin':
+        ml_strat_reg_model = ml_strat_reg_kla(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
         ml_strat_reg_model.createSignal()
         signal_df = ml_strat_reg_model.getSignalDf()
