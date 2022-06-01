@@ -113,6 +113,7 @@ class SpreadSheet(object):
             'Ending Capital': ending_capital,
             'Net Profit': net_profit,
             'Net Profit %': net_profit_pct,
+            'Number of Trades': len(self.__trade_history),
             'Ratio Longs': ratio,
             'Transaction Costs': trans_cost 
         }
@@ -209,6 +210,7 @@ class SpreadSheet(object):
             max_consecutive = get_consecutive(trade_history['Return'])
             largest_win = trade_history['Return'][trade_history['Return'] > 0].max(
             )
+            num_of_winning_trades = len(trade_history[trade_history['Return'] > 0])
             bars_in_largest_win = trade_history['Bars Held'][trade_history['Return']
                                                               == largest_win].iloc[0]
        
@@ -218,6 +220,7 @@ class SpreadSheet(object):
             'Avg. Bars Held': avg_bars_held,
             'Max. Consecutive': max_consecutive,
             'Largest Win': largest_win,
+            'Number of Winning Trades': num_of_winning_trades,
             'Bars in Largest Win': bars_in_largest_win
         }
 
@@ -253,14 +256,16 @@ class SpreadSheet(object):
             max_consecutive = get_consecutive(
                 trade_history['Return'], of_wins=False)
             largest_loss = trade_history['Return'][trade_history['Return'] < 0].max()
+            num_of_losing_trades = len(trade_history[trade_history['Return'] < 0])
             bars_in_largest_loss = trade_history['Bars Held'][trade_history['Return'] == largest_loss].iloc[0]
 
         data = {
-            'Total Profit %': total_profit,
-            'Avg. Profit %': avg_profit,
+            'Total Loss %': total_profit,
+            'Avg. Loss %': avg_profit,
             'Avg. Bars Held': avg_bars_held,
             'Max. Consecutive': max_consecutive,
             'Largest Loss': largest_loss,
+            'Number of Losing Trades': num_of_losing_trades,
             'Bars in Largest Loss': bars_in_largest_loss
         }
 

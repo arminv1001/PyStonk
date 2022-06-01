@@ -27,7 +27,7 @@ class TradeHistory(object):
 
     @property
     def df(self):
-        
+        print(self.__df)
         return self.__df
 
     def __create_trade_history_df(self):
@@ -164,7 +164,7 @@ class TradeHistory(object):
             short_index = self.__master_df.index.get_loc(self.__short_dates[i])
             long_index = self.__master_df.index.get_loc(self.__long_dates[i])
             bars = short_index - long_index
-            bars_held.append(bars)
+            bars_held.append(float(bars))
 
         return np.array(bars_held)
 

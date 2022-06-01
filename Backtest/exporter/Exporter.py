@@ -158,7 +158,7 @@ class Exporter(object):
                 )
             )
 
-        fig.layout.update(title_text='Equity %',
+        fig.layout.update(title_text='log Equity',
                             xaxis_rangeslider_visible=True)
 
         fig.write_html(dir_temp + "/equity_log.html")
@@ -182,7 +182,7 @@ class Exporter(object):
                 )
             )
 
-        fig.layout.update(title_text='Equity %',
+        fig.layout.update(title_text='log Equity %',
                             xaxis_rangeslider_visible=True)
 
         fig.write_html(dir_temp + "/equity_log_pct.html")

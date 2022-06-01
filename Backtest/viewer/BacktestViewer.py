@@ -125,24 +125,29 @@ def view_equity(database_name):
         equity_df (pd DataFrame): equity df
         signal_df (pd DataFrame): position df
     """
+    st.subheader('Equity')
 
     equity_df = get_df_from_database(database_name, 'equity')
 
     signal_df = get_df_from_database(database_name, 'master_df', ['Timestamp', 'Signal'])
 
     equity_rad = st.radio(
-        '', ['percentage %', 'absolute', 'log10 percentage %', 'log10absolute'], key="<equity_rad>")
+        '', ['percentage %', 'absolute', 'log10 percentage %', 'log10 absolute'], key="<equity_rad>")
 
     if equity_rad == 'absolute':
+        name = 'Equity'
         equity_data = equity_df['Equity'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['Benchmark'][signal_df['Signal'] < 0]
     elif equity_rad == 'percentage %':
+        name = 'Equity %'
         equity_data = equity_df['Equity %'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['Benchmark %'][signal_df['Signal'] < 0]
     elif equity_rad == 'log10 percentage %':
+        name = 'log Equity %'
         equity_data = equity_df['log Equity %'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['log Benchmark %'][signal_df['Signal'] < 0]
     elif equity_rad == 'log10 absolute':
+        name ='log Equity'
         equity_data = equity_df['log Equity'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['log Benchmark'][signal_df['Signal'] < 0]
 
@@ -166,7 +171,7 @@ def view_equity(database_name):
         )
     )
 
-    fig.layout.update(title_text='Equity',
+    fig.layout.update(title_text=name,
                         xaxis_rangeslider_visible=True,
                         showlegend=False
                         )
@@ -189,6 +194,8 @@ def view_drawdown(database_name):
         drawdown_data = drawdown_df['Drawdown'][signal_df < 0]
     elif dd_rad == 'percentage %':
         drawdown_data = drawdown_df['Drawdown %'][signal_df < 0] """
+
+    st.subheader('Drawdown')
 
     drawdown_df = get_df_from_database(database_name, 'drawdown')
     signal_df = get_df_from_database(database_name, 'master_df', ['Timestamp', 'Signal'])
@@ -445,15 +452,19 @@ def view_sidebar_settings():
 
     database_name = None
 
-    if st.sidebar.button('Run Backtest'):
+    run_bt = st.sidebar.button('Run Backtest')
+    run_bt_opt = st.sidebar.button('Run Backtest with Optimizer')
+
+    if run_bt:
 
         bt_settings_dict['parameter'] = bt_settings_dict['opt_start']
 
         BacktestModel(bt_settings_dict)
 
         st.header('Backtest finished')
+        st.balloons()
 
-    elif st.sidebar.button('Run Backtest with Optimizer'):
+    elif run_bt_opt:
 
         optimizer = Optimizer(bt_settings_dict)
 
@@ -463,6 +474,7 @@ def view_sidebar_settings():
         model = models[parameter]
 
         st.header('Backtest with Optimizer finished')
+        st.balloons()
 
         return [True, database_name]
 
@@ -487,6 +499,7 @@ def view_sidebar_settings():
         exporter = Exporter(database_name, benchmark_active)
         exporter.create_exports()
         st.header('Backtest Export finished')
+        st.balloons()
 
 
 
