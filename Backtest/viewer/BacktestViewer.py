@@ -418,7 +418,7 @@ def view_sidebar_settings():
     # datetime object containing current date and time
     now = datetime.now()
     # dd/mm/YY H:M:S
-    creation_date = now.strftime("%d_%m_%Y_%H:%M:%S")
+    creation_date = now.strftime("%d_%m_%Y_%H_%M_%S")
 
     database_name = 'btdb_' + strategy + '_' + creation_date
 
