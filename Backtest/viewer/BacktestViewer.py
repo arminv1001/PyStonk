@@ -480,7 +480,7 @@ def view_sidebar_settings():
 
     st.sidebar.header('Visualize Results')
 
-    dir = os.path.abspath(os.curdir)
+    dir = os.path.join(os.path.abspath(os.curdir), 'export/database')
 
     database_name = None
 

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import sqlite3
+import shutil
 
 from data_prep.CSVDataPreparer import *
 from equity.Equity import *
@@ -113,6 +114,11 @@ class BacktestModel(object):
         winners.to_sql('winners', conn, if_exists='replace', index = False)
         losers.to_sql('losers', conn, if_exists='replace', index = False)
         runs_info.to_sql('runs_info', conn, if_exists='replace', index = False)
+
+        source = os.path.join(os.path.abspath(os.curdir), self.__database_name)
+        destination = os.path.join(os.path.abspath(os.curdir), 'export/database')
+
+        shutil.move(source, destination)
 
 
     def __set_all(self):
