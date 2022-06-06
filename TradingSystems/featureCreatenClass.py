@@ -13,7 +13,17 @@ def upper_shadow(df):
 def lower_shadow(df): 
     return np.minimum(df['Close'], df['Open']) - df['Low']
 
-def get_features(df, row = False):
+def get_features(df, row = False)->pd.DataFrame:
+    """Finanz Indikatoren
+        https://www.kaggle.com/code/swaralipibose/lgdm-model-with-new-features-better-generalization/
+    Args:
+        df : aktulles Dataframe
+        row (bool, optional): Defaults to False.
+        
+
+    Returns:
+        pd.DataFrame: Ursprüngliches Dataframe mit Indikatoren
+    """
     df_feat = df
     df_feat['mean_trade'] = df_feat['Volume']/df_feat['Count']
     df_feat['upper_Shadow'] = upper_shadow(df_feat)
@@ -39,14 +49,30 @@ def get_features(df, row = False):
 
 
 
-def decomposition_noise(df,period=60):
+def decomposition_noise(df:pd.DataFrame,period=60)->pd.DataFrame:
+    """Calc Dekomposition, Mult, Periode default 60, add noise to DF
+
+    Args:
+        df (pd.DataFrame): Ursprungs Dataframe 
+        period (int, optional): Periode. Defaults to 60.
+
+    Returns:
+        pd.DataFrame: Urpsprüngliches Dataframe mit Noise-Multi-Dekomposition
+    """
     df_feat = df
     result_mult=seasonal_decompose(df_feat['Close'], model='multiplicative', period=period)
-    result_add=seasonal_decompose(np.log(df_feat['Close']), model='additive', period=period)
     df_feat["noise_mult"] = result_mult.resid
     return df_feat
 
-def fft_feature(df):
+def fft_feature(df:pd.DataFrame)->pd.DataFrame:
+    """FFT als Feature in den Schritten 5, 15, 50
+
+    Args:
+        df (pd.DataFrame): Ursprungs Dataframe
+
+    Returns:
+        pd.Dataframe: Ursprungs Dataframe mit neuen FFT Features
+    """
     df_feat = df
     close_fft = np.fft.fft(np.asarray(df_feat['Close'].tolist()))
     fft_df = pd.DataFrame({'fft':close_fft})
@@ -59,17 +85,35 @@ def fft_feature(df):
     return df_feat
     
 
-def tech_analysis(df):
+def tech_analysis(df:pd.DataFrame) -> pd.DataFrame:
+    """Moving Average Indiaktor 
+
+    Args:
+        df (pd.DataFrame): Ursprungs Dataframe
+
+    Returns:
+        pd.DataFrame: Ursprungs Dataframe mit neuen MA Features
+    """
     df_feat = df
     df_feat["MA_20"] = df_feat["Close"].rolling(20).mean()
     df_feat["MA_diff"] = np.log(1+(df_feat.MA_20 - df_feat.Close)/df_feat.Close.shift(1))
     return df_feat
     
 def get_macd(price, slow, fast, smooth):
+    """MACD - not used
+
+    Args:
+        price (float): preis
+        slow (float): slow macd
+        fast (float): fast macd
+        smooth (float): smooth macd
+
+    Returns:
+        pd.DataFrame: Ursprungs Dataframe mit neuen MACD Features
+    """
     exp1 = price.ewm(span = fast, adjust = False).mean()
     exp2 = price.ewm(span = slow, adjust = False).mean()
     macd = pd.DataFrame(exp1 - exp2).rename(columns = {'Close':'macd'})
-    print(macd)
     signal = pd.DataFrame(macd.ewm(span = smooth, adjust = False).mean()).rename(columns = {'macd':'signal'})
     hist = pd.DataFrame(macd['macd'] - signal['signal']).rename(columns = {0:'hist'})
     frames =  [macd, signal, hist]
@@ -83,7 +127,16 @@ def outlier_correction(df):
     
     
 #https://github.com/krishnaik06/Finding-an-Outlier/blob/master/Finding%20an%20outlier%20in%20a%20Dataset.ipynb
-def detect_outliers(data,std_threshold=15):  
+def detect_outliers(data,std_threshold=15): 
+    """Ausreißer Erkennung und Korrektur
+
+    Args:
+        data (pd.DatamFrame): Ursprungs DataFrame
+        std_threshold (int, optional): Z-Score Standardabweichung ab der korrigiert werden soll. Defaults to 15.
+
+    Returns:
+        pd.DataFrame: DataFrame mit korrigierte Verteilung
+    """
     row_names = ["High","Open","Low","Close"]
     df = data
     for column in row_names:
@@ -105,19 +158,27 @@ def detect_outliers(data,std_threshold=15):
     df["Log_Close"] = df["zscores"]
     return df
 
-def feature_seasonal(df):
+def feature_seasonal(df:pd.DataFrame)->pd.DataFrame:
+    """Ergänzung saisonale Features
+
+    Args:
+        df (pd.DataFrame): Ursprungs Dataframe
+
+    Returns:
+        pd.DataFrame: Dataframe mit saisonalen Features
+    """
     df_feat = df
     df_feat["Minute"] = df_feat.index.minute
     df_feat["Day"] = df_feat.index.day
     df_feat["Month"] = df_feat.index.month
     df_feat["Year"] = df_feat.index.year
     df_feat["DayOfWeek"] = df_feat.index.dayofweek
-    btc_season_log = df_feat["Log_Close"]
-    btc_seasonal_min =  btc_season_log.groupby(btc_season_log.index.minute).median()
-    df_feat["minute_seasonal"] = df_feat.Minute.apply(min_mapper, pd_series = btc_seasonal_min)
+    season_log = df_feat["Log_Close"]
+    seasonal_min =  season_log.groupby(season_log.index.minute).median()
+    df_feat["minute_seasonal"] = df_feat.Minute.apply(min_mapper, pd_series = seasonal_min)
     def get_correlation(vals):
-        return pearsonr(vals, btc_seasonal_min)[0]
-    df_feat['correlation_log_perf'] = btc_season_log.rolling(window=len(btc_seasonal_min)).apply(get_correlation)
+        return pearsonr(vals, seasonal_min)[0]
+    df_feat['correlation_log_perf'] = season_log.rolling(window=len(seasonal_min)).apply(get_correlation)
     return df_feat
     
 
@@ -127,6 +188,14 @@ def min_mapper(value,pd_series):
 
 
 def createFeature(df):
+    """Erstellt teil der Features
+
+    Args:
+        df (pd.DataFrame): Ursprungs Dataframe
+
+    Returns:
+        pd.DataFrame : Alle Features im DF
+    """
     df_1 = get_features(df)
     print("Step 1")
     df_2 = decomposition_noise(df_1)
@@ -142,6 +211,14 @@ def createFeature(df):
 
 
 def featuresGen(data:pd.DataFrame)->pd.DataFrame:
+    """Hauptfunktion für die Generiung der Feeatures
+
+    Args:
+        data (pd.DataFrame): Urpsrungs Dataframe
+
+    Returns:
+        pd.DataFrame: Dataframe mit allen Features
+    """
     data = createFeature(data)
     data = data.dropna()
     data = detect_outliers(data)

@@ -6,6 +6,11 @@ import pandas as pd
 import numpy as np
 from joblib import load
 class ml_strat_reg_kla(TradingSystem):
+    """Klassifikations-Regressions-Handelssystem
+
+    Args:
+        TradingSystem (_type_): Basisklasse
+    """
     def __init__(self, symbolsNames: list, alternativDataNames: list, systemName: str, systemType: str, systemStyle: int, broker: Broker, timeFrame: str, weekendTrading: bool = False, lookback_candels: int = None):
         super().__init__(symbolsNames, alternativDataNames, systemName, systemType, systemStyle, broker, timeFrame, weekendTrading, lookback_candels)
         self.model = load_model('TradingSystems/ml_system/1_lstm_V3_class_test.h5')
@@ -38,27 +43,26 @@ class ml_strat_reg_kla(TradingSystem):
             reg_lg = load("TradingSystems/ml_system/lg.sav")
             pred = reg_lg.predict(tmpData[["std","Label"]])
             tmpData["Target"] = pred
-            # Tradingsystem
+            # Tradingsystem-Logik
             
             openTrades =  False
             counter = 0
-            #np.zero
             position_list = np.zeros([len(tmpData),])
             target_stopLoss = [0,0]
             tmpData = tmpData.reset_index(drop=True)
             tmpData.index = tmpData.index.astype("int")  
             for index,row in tmpData.iterrows():
-                if (row["Minute"] % 15) == 0:
+                if (row["Minute"] % 15) == 0: # Trades nur alle 15 Minuten
                     if row["Target"] > 0:
                        counter = 14
                        openTrades = True
-                       target_stopLoss[0] = row["Target"] * row["Close"] + row["Close"]
-                       target_stopLoss[1] = row["Close"] * 0.05 + row["Close"]
+                       target_stopLoss[0] = row["Target"] * row["Close"] + row["Close"] # Takeprofit
+                       target_stopLoss[1] = row["Close"] * 0.05 + row["Close"] # Stoploss
                        position_list[index] = 1
                     elif counter > 0:
                         print("Error - Überschreitung")
                         
-                elif counter > 0 and openTrades == True:
+                elif counter > 0 and openTrades == True: # Check ob Position geschlossen werden muss
                     if target_stopLoss[1] >= row["Low"] or target_stopLoss[0] <= row["High"]:
                         position_list[index] = -1
                         counter = 0
