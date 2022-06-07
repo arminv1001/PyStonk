@@ -9,7 +9,7 @@ from equity.Equity import *
 from statistics.spreadsheet import *
 from tools.toolbox import *
 from trade_history.TradeHistory import *
-from strategy.strategy1 import *
+from strategy.run_strategy import *
 
 
 sys.path.append('.')
@@ -69,11 +69,14 @@ class BacktestModel(object):
 
 
     def __create_database(self):
+        """
+        Creates Database of all relevant DataFrames: master_df, equity, trade_history, drawdown, general info, performance info, all trades info, winners, losers, runs info
+        """
 
         conn = sqlite3.connect(self.__database_name) 
-
         c = conn.cursor()
 
+        # create tables
         c.execute('CREATE TABLE IF NOT EXISTS master_df (Timestamp date, Open number, High number, Close number, Low number, Volume number, Turnover number, Unadjusted_Close number, Dividend number, Signal number)')
         c.execute('CREATE TABLE IF NOT EXISTS equity (Timestamp date, Equity number, Equity_pct number, log_Equity number, log_Equity_pct number)')
         c.execute('CREATE TABLE IF NOT EXISTS trade_history (Start_Date date, End_Date date, Buy_Price number, Sell_Price number, Return number, Return_pct number, Bars_Held number, Size number)')
@@ -87,6 +90,8 @@ class BacktestModel(object):
         c.execute('CREATE TABLE IF NOT EXISTS runs_info (Metric text, Data number)')
 
         conn.commit()
+
+        # prepare DataFrames
         equity_df = self.__equity_df.set_index(self.__master_df_s.index)
         equity_df = self.equity_df.reset_index()
         equity_df = equity_df.rename(columns={'index': "Timestamp"})
@@ -103,6 +108,7 @@ class BacktestModel(object):
         losers = self.__spreadsheet.losers.reset_index()
         runs_info = self.__spreadsheet.runs_info.reset_index()
 
+        # insert DataFrame into Database
         master_df_s.to_sql('master_df', conn, if_exists='replace', index = False)
         equity_df.to_sql('equity', conn, if_exists='replace', index = False)
         self.__trade_history_s.df.to_sql('trade_history', conn, if_exists='replace', index = False)
@@ -115,6 +121,7 @@ class BacktestModel(object):
         losers.to_sql('losers', conn, if_exists='replace', index = False)
         runs_info.to_sql('runs_info', conn, if_exists='replace', index = False)
 
+        # Move Database File
         source = os.path.join(os.path.abspath(os.curdir), self.__database_name)
         destination = os.path.join(os.path.abspath(os.curdir), 'export/database')
 
@@ -138,20 +145,6 @@ class BacktestModel(object):
         """
         Creates Master DF containing stock data and buy/sell signals
         """
-
-        
-
-        # self.__master_df_s = self.__get_data_df(
-        #     self.__symbol,
-        #     self.__start_date_time,
-        #     self.__end_date_time,
-        #     self.__data_source_s)
-
-        # self.__master_df_b = self.__get_data_df(
-        #     self.__benchmark_symbol,
-        #     self.__start_date_time,
-        #     self.__end_date_time,
-        #     self.__date_source_b)
 
         self.__master_df_s = run_strategy(self.__strategy, self.__symbol, self.__data_source_s, self.__parameter)
 
@@ -260,35 +253,3 @@ class BacktestModel(object):
             self.__start_capital,
             self.__comission,
             self.__periodicity)
-
-    def __get_data_df(self, symbol, start_date, end_date, source):
-        """
-        Gets stock data of symbol for given timeframe
-
-        Args:
-            symbol (str): Symbol
-            start_date (datetime): Start Time
-            end_date (datetime): End Time
-            source (str): Source from which the stock data is retrivied from
-
-        Returns:
-            DataFrame: DataFrame containing stock data
-        """
-        
-        
-
-        # # Retrieves from Yahoo Finance Data
-        # if source == 'Yahoo Finance':
-
-        #     master = yf.Ticker(symbol[0])
-        #     master_df = master.history(start_date, end_date)
-
-        # # Retrieves Data from backtest_data folder
-        # elif source == '.csv':
-        #     master_df = data_handler.getAlternativData()
-
-        #     csvDP = CSVDataPreparer(csv_symbols=symbol)
-        #     master_df = csvDP.get_assets_historic_data(
-        #         start_date, end_date, symbol)
-
-        return master_df

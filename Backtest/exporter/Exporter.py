@@ -12,7 +12,7 @@ import numpy as np
 
 class Exporter(object):
     """
-    TradeHistory contains all information about all trades of strategy
+    Exporter exports all Backtest information from a Backtest Database to specified export files
 
     """
 
@@ -24,12 +24,18 @@ class Exporter(object):
 
 
     def create_exports(self):
-        self.__create_dashboard()
+        """
+        Creates exports of all Backtest information
+        """
+        self.__create_price_chart()
         self.__create_trade_history()
         self.__create_charts()
         self.__create_spreadsheet()
 
     def __create_spreadsheet(self):
+        """
+        Creates exports of spreadsheet information (.csv, .png)
+        """
 
         dir_temp = self.__dir + '/spreadsheet'
         os.makedirs(dir_temp)
@@ -65,18 +71,22 @@ class Exporter(object):
         dfi.export(runs_info, dir_temp1)
 
     def __create_charts(self):
+        """
+        Creates exports of Backtest Charts
+        """
 
         self.__create_equity()
         self.__create_drawdown()
 
     def __create_equity(self):
+        """
+        Creates exports of Equity Charts (.html, .png)
+        """
 
+        # get data from database
         dir_temp = self.__dir + '/equity'
-
         os.makedirs(dir_temp)
-
         equity_df = get_df_from_database(self.__database_name, 'equity')
-
         signal_df = get_df_from_database(self.__database_name, 'master_df', ['Timestamp', 'Signal'])
 
         equity_data = equity_df['Equity'][signal_df['Signal'] < 0]
@@ -91,7 +101,7 @@ class Exporter(object):
             benchmark_log_data = equity_df['log Benchmark'][signal_df['Signal'] < 0]
             benchmark_log_pct_data = equity_df['log Benchmark %'][signal_df['Signal'] < 0]
 
-
+        # create charts
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
@@ -190,11 +200,16 @@ class Exporter(object):
 
 
     def __create_drawdown(self):
+        """
+        Creates exports of Drawdown Chart (.html, .png)
+        """
+        
+        # get data from database
         drawdown_df = get_df_from_database(self.__database_name, 'drawdown')
         signal_df = get_df_from_database(self.__database_name, 'master_df', ['Timestamp', 'Signal'])
-
         drawdown_data = drawdown_df['Drawdown %'][signal_df['Signal'] < 0]
 
+        # create chart
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=drawdown_data.index, y=drawdown_data, name='Drawdown'))
@@ -206,6 +221,10 @@ class Exporter(object):
         fig.write_image(self.__dir + "/drawdown.png")
 
     def __create_trade_history(self):
+        """
+        Creates exports of Trade History Chart (.csv)
+        """
+        # get data from database
         df = get_df_from_database(self.__database_name, 'trade_history')
         df.to_csv(self.__dir + '/trade_history.csv') 
 
@@ -213,19 +232,23 @@ class Exporter(object):
             color_win_loss, subset=['Return', 'Return %']).highlight_max(
             color='lightgreen', axis=0).highlight_min(color='#cd4f39', axis=0)
 
-        
-        #dir_temp = self.__dir + '/trade_history.png'
 
-        #dfi.export(df, dir_temp)
+    def __create_price_chart(self, chart_type='OHLC'):
+        """
+        Creates exports of Price Chart with Buy and Sell Signals (.html, .png)
 
-    def __create_dashboard(self, chart_type='OHLC'):
-        
+        Args:
+            chart_type (str, optional): sets the price chart type. Defaults to 'OHLC'.
+        """
 
+        # get data from database
+        df = get_df_from_database(self.__database_name, 'master_df')
+
+        # create chart
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                         vertical_spacing=0.03, subplot_titles=(chart_type, 'Volume'),
                         row_width=[0.2, 0.7])
-
-        df = get_df_from_database(self.__database_name, 'master_df')
+        
 
         if (chart_type == 'OHLC'):
             # Plot OHLC on 1st row
@@ -254,7 +277,6 @@ class Exporter(object):
             )
         )
 
-
         fig.add_trace(
             go.Scatter(
                 mode='markers',
@@ -267,7 +289,6 @@ class Exporter(object):
                 name = 'Buy'
             )
         )
-
 
         fig.update_layout(
             xaxis=dict(

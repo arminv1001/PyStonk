@@ -18,8 +18,21 @@ from TradingSystems.ml_stra import ml_strat_reg
 from TradingSystems.ml_strat_reg_kla import ml_strat_reg_kla
 
 def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
+    """
+    Runs demanded strategy with given information
 
-    if data_source.startswith('.'):
+    Args:
+        strategy (str): strategy
+        symbols (str): symbol
+        data_source (str): data source
+        parameter (float): parameter of strategy
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+
+    # general strategy settings
+    if data_source.startswith('.'): # data source is a file e.g. ".csv"
         filename = symbols + data_source
         path = os.path.join(CSV_DIR, filename)
 
@@ -31,6 +44,7 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
     broker = None
     timeFrame = ''
 
+    # create Trading System object
     if strategy == 'Moving_Average':
         ma_strategy = Strategy1(
             symbolsNames, alternativDataName, systemName, systemType, systemStyle, broker, timeFrame)
@@ -51,31 +65,3 @@ def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
 
     return signal_df
 
-# def run_strategy(master_df, strategy)->pd.DataFrame:
-#     """
-#     Simple function running Moving Average Strategy
-
-#     Args:
-#         master_df (pd Dataframe): master_df
-
-#     Returns:
-#         pd Dataframe: master_df with Signals and Position
-#     """
-
-#     master_df['20_SMA'] = master_df['Close'].rolling(window=20, min_periods=1).mean()
-#     master_df['50_SMA'] = master_df['Close'].rolling(window=50, min_periods=1).mean()
-#     master_df['Signal'] = 0
-#     master_df['Signal'] = np.where(master_df['20_SMA'] > master_df['50_SMA'], 1, 0)
-#     master_df['Position'] = master_df['Signal'].diff().fillna(0)
-#     columns = ['50_SMA', '20_SMA']
-#     # Moving Average Crossover Strategy
-#     plt.figure(figsize=(20,5))
-#     #plt.plot(master_df.index, master_df[symbol], color="#425af5")
-#     #plt.plot(master_df.index, master_df['50_SMA'], color= "#f5b042")
-#     #plt.plot(master_df.index, master_df['20_SMA'], color= "#f5ef42")
-#     master_df['Short_Signal'] = master_df['Close'][master_df['Position'] == -1]
-#     master_df['Long_Signal'] = master_df['Close'][master_df['Position'] == 1]
-#     #master_df = master_df.rename(columns={symbol[0]:"Close"})
-
-
-#     return master_df

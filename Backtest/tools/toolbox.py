@@ -1,3 +1,7 @@
+"""
+Module with various function that are used in Backtest
+
+"""
 import numpy as np
 import pandas as pd
 import os
@@ -17,19 +21,32 @@ DATABASE_INFO = {
     'losers': ['Metric', 'Data'],
     'runs_info': ['Metric', 'Data']
 }
+  
 
 def get_df_from_database(database_name, table_name, col_names="*"):
+    """
+    Returns DataFrame from given Database
 
+    Args:
+        database_name (str): database name
+        table_name (str): table name
+        col_names (str, optional): column name. Defaults to "*".
+
+    Returns:
+        pd.DataFrame: DataFrame
+    """
+
+    # set cursor
     db_dir = os.path.join(os.path.abspath(os.curdir), 'export/database') + database_name
-
     conn = sqlite3.connect(db_dir)
     c = conn.cursor()
 
-    if col_names != '*':
+    # set column names
+    if col_names != '*': # all columns
         columns = col_names
         col_names_str = ", ".join(col_names)
 
-    else:
+    else: # specific column
         columns = DATABASE_INFO[table_name]
         col_names_str = col_names
 
@@ -37,9 +54,9 @@ def get_df_from_database(database_name, table_name, col_names="*"):
 
     df = pd.DataFrame(c.fetchall(), columns=columns)
 
+    # fix index
     date_df_list = ['master_df', 'equity', 'drawdown']
     index_df_list = ['general_info', 'performance_info', 'all_trades_info', 'winners', 'losers', 'runs_info']
-
     if table_name in date_df_list:
         df = df.set_index('Timestamp')
     elif table_name in index_df_list:

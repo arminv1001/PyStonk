@@ -37,6 +37,7 @@ DATABASE_INFO = {
     'losers': ['Metric', 'Data'],
     'runs_info': ['Metric', 'Data']
 }
+SOURCE_LIST = ['.csv', 'Yahoo Finance']
 
 def run_backtest_viewer():
     """
@@ -59,6 +60,13 @@ def run_backtest_viewer():
 
 
 def view_optimizer(optimizer):
+    # TO-DO: Finish Optimizer
+    """
+    Displays Optimizer Chart
+
+    Args:
+        optimizer (_type_): _description_
+    """
 
     st.header('Charts')
 
@@ -356,9 +364,9 @@ def view_sidebar_settings():
     st.sidebar.header('Trading System')
     strategy = st.sidebar.selectbox(
         'Choose your strategy', STRATEGY_LIST)
-    source_list = ['.csv', 'Yahoo Finance']
+    SOURCE_LIST = ['.csv', 'Yahoo Finance']
     data_source_s = st.sidebar.selectbox(
-        'Select your System Data Source', source_list, key="<symbol>")
+        'Select your System Data Source', SOURCE_LIST, key="<symbol>")
     data_source_b = None
     benchmark = None
 
@@ -376,7 +384,7 @@ def view_sidebar_settings():
     if benchmark_active:
 
         data_source_b = st.sidebar.selectbox(
-            'Select your Benchmark Data Source', source_list, key="<benchmark>")
+            'Select your Benchmark Data Source', SOURCE_LIST, key="<benchmark>")
 
         if data_source_b == 'Yahoo Finance':
             benchmark = st.sidebar.text_input('Benchmark Symbol', key="<ds_b>")
@@ -448,6 +456,7 @@ def view_sidebar_settings():
 
     }
 
+    # Run Backtest
     st.sidebar.header('Confirm Configuration')
 
     database_name = None
@@ -465,7 +474,7 @@ def view_sidebar_settings():
         st.balloons()
 
     elif run_bt_opt:
-
+        # TO-DO: Finish Optimizer
         optimizer = Optimizer(bt_settings_dict)
 
         parameter = st.select_slider('Runs', optimizer.parameters)
@@ -478,6 +487,8 @@ def view_sidebar_settings():
 
         return [True, database_name]
 
+    
+    # Visualize Results
     st.sidebar.header('Visualize Results')
 
     dir = os.path.join(os.path.abspath(os.curdir), 'export/database')
@@ -500,7 +511,5 @@ def view_sidebar_settings():
         exporter.create_exports()
         st.header('Backtest Export finished')
         st.balloons()
-
-
 
     return [False, database_name]

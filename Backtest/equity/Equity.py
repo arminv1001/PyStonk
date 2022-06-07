@@ -3,7 +3,7 @@ import pandas as pd
 
 class Equity(object):
     """
-    Equity contains all relevant information about equity of strategy
+    Equity creates and contains all relevant information about equity of strategy
 
     """
 

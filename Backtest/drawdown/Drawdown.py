@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 class Drawdown(object):
     """
-    Drawdown contains all relevant information about drawdowns of strategy
+    Drawdown creates abd contains all relevant information about drawdown of strategy
 
     """
 

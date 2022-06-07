@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 class Optimizer(object):
+    # TO-DO: Finish Optimizer
     """
     Optimizer runs multiple backtest with altering input parameters
 
@@ -59,6 +60,16 @@ class Optimizer(object):
         return self.__models
 
     def get_info(self, info_type, info_key):
+        """
+        Returns all DataFrames of demanded information type
+
+        Args:
+            info_type (str): information type
+            info_key (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
 
         if info_type == 'General':
             info_list = self.__general_infos
