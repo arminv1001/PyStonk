@@ -37,7 +37,9 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
     ```sh
     % streamlit run Backtest/main.py
     ```
-
+ 
+</details>
+ 
  ### Create a Backtest
  On the sidebar you set all the necessary parameters to run the backtest for your trading system.
  
@@ -47,6 +49,8 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
  2. Select System Data Source
  3. Enter System Symbol or Name of Data Source (.csv)
  4. Activate Benchmark (in progress)
+
+ ![](img/ts.png)
  
  #### Date & Time
  
@@ -55,6 +59,8 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
  3. Enter End Date
  4. Enter End Time (if necessary)
  5. Configure the Periodicity (in progress)
+
+ ![](img/datetime.png)
  
  #### Cash & Co.
  
@@ -62,12 +68,25 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
  2. Enter Trading Size (if 0 is selected, the complete equity invested for every trade instead of a fix size)
  3. Enter Comission
  4. Enter Risk-Free Rate
+
+ ![](img/cashco.png)
  
  #### Optimizer (in progress)
  
  (1. Active Optimizer)
  1. Enter (Start) Parameter (necessary for Moving_Average, 20 is recommended)
+
+ ![](img/optimizer.png)
  
  ### Confirm Configuration
  
- Confirm your Backtest Configuration and run the Backtest by clicking on the _Run Backtest_-Button
+ Confirm your Backtest Configuration and run the Backtest by clicking on the _Run Backtest_-Button. 
+ _Run Backtest with Optimizer_-Button is still in progress.
+ 
+  ![](img/confirm.png)
+ 
+ ### Visualize Results
+ 
+ After the Backtesting is finished, you are able to see the available Backtest database file in the _Available Backtest_-selection box. Now you can choose to either visualize the result in the GUI or export them as seperate files by clicking on of the two buttons.
+ 
+  ![](img/visualize.png)
