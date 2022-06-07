@@ -34,7 +34,7 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
  2. Run streamlit GUI:
 
     ```sh
-    % streamlit run Backtest/main.py
+    $ streamlit run Backtest/main.py
     ```
  
  ### Create a Backtest
