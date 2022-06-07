@@ -37,7 +37,7 @@ def get_df_from_database(database_name, table_name, col_names="*"):
     """
 
     # set cursor
-    db_dir = os.path.join(os.path.abspath(os.curdir), 'export/database') + database_name
+    db_dir = os.path.join(os.path.abspath(os.curdir), 'export/database/') + database_name
     conn = sqlite3.connect(db_dir)
     c = conn.cursor()
 

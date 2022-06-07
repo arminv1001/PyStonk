@@ -1,5 +1,4 @@
 import sys
-from data_prep.CSVDataPreparer import *
 from equity.Equity import *
 from statistics.spreadsheet import *
 from viewer.BacktestViewer import *
@@ -16,6 +15,8 @@ sys.path.append('.')
 from TradingSystems.Strategy1 import Strategy1
 from TradingSystems.ml_stra import ml_strat_reg
 from TradingSystems.ml_strat_reg_kla import ml_strat_reg_kla
+
+CSV_DIR = os.path.join(os.path.abspath(os.curdir), "Backtest/backtest_data")
 
 def run_strategy(strategy, symbols, data_source, parameter) -> pd.DataFrame:
     """

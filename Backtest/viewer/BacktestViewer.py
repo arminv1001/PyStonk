@@ -46,14 +46,16 @@ def run_backtest_viewer():
 
     st.title("Backtest Dashboard")
 
-    return_list = view_sidebar_settings()
+    run, viz_settings = view_sidebar_settings()
 
-    if return_list[0]:
-        database_name = return_list[1]
+    if run:
+        database_name = viz_settings['database_name']
+        dashboard_viz_type = viz_settings['dashboard_type']
+        equity_viz_type = viz_settings['equity_type']
 
-        view_dashboard(database_name)
+        view_dashboard(database_name, dashboard_viz_type)
         view_trade_history(database_name)
-        view_charts(database_name)
+        view_charts(database_name, equity_viz_type)
         view_spreadsheet(database_name)
         # view_optimizer(optimizer)
 
@@ -112,7 +114,7 @@ def view_trade_history(database_name):
     st.dataframe(df, 1100, 200)
 
 
-def view_charts(database_name):
+def view_charts(database_name, equity_viz_type):
     """
     Displays equity and drawdown charts
     Args:
@@ -123,10 +125,10 @@ def view_charts(database_name):
 
     st.header('Charts')
 
-    view_equity(database_name)
+    view_equity(database_name, equity_viz_type)
     view_drawdown(database_name)
 
-def view_equity(database_name):
+def view_equity(database_name, equity_viz_type):
     """
     Displays equity information
     Args:
@@ -139,28 +141,25 @@ def view_equity(database_name):
 
     signal_df = get_df_from_database(database_name, 'master_df', ['Timestamp', 'Signal'])
 
-    equity_rad = st.radio(
-        '', ['percentage %', 'absolute', 'log10 percentage %', 'log10 absolute'], key="<equity_rad>")
+    #equity_rad = st.radio(
+    #    '', ['percentage %', 'absolute', 'log10 percentage %', 'log10 absolute'], key="<equity_rad>")
 
-    if equity_rad == 'absolute':
+    if equity_viz_type == 'absolute':
         name = 'Equity'
         equity_data = equity_df['Equity'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['Benchmark'][signal_df['Signal'] < 0]
-    elif equity_rad == 'percentage %':
+    elif equity_viz_type == 'percentage %':
         name = 'Equity %'
         equity_data = equity_df['Equity %'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['Benchmark %'][signal_df['Signal'] < 0]
-    elif equity_rad == 'log10 percentage %':
+    elif equity_viz_type == 'log10 percentage %':
         name = 'log Equity %'
         equity_data = equity_df['log Equity %'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['log Benchmark %'][signal_df['Signal'] < 0]
-    elif equity_rad == 'log10 absolute':
+    elif equity_viz_type == 'log10 absolute':
         name ='log Equity'
         equity_data = equity_df['log Equity'][signal_df['Signal'] < 0]
         benchmark_data = equity_df['log Benchmark'][signal_df['Signal'] < 0]
-
-    print(equity_data)
-
 
     fig = go.Figure()
 
@@ -256,7 +255,7 @@ def view_spreadsheet(database_name):
     loser_col.dataframe(losers)
 
 
-def view_dashboard(database_name):
+def view_dashboard(database_name, dashboard_viz_type):
     """
     Display dashboard with generel information about strategy and stock
     Args:
@@ -264,22 +263,22 @@ def view_dashboard(database_name):
         master_df (pd DataFrame): master df
     """
     st.header("General Info")
-    chart_type= st.selectbox('Select Chart Type', ['OHLC', 'Close'])
+    #chart_type= st.selectbox('Select Chart Type', ['OHLC', 'Close'])
 
 
 
     # Create figure with secondary y-axis
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                        vertical_spacing=0.03, subplot_titles=(chart_type, 'Volume'),
+                        vertical_spacing=0.03, subplot_titles=(dashboard_viz_type, 'Volume'),
                         row_width=[0.2, 0.7])
 
     df = get_df_from_database(database_name, 'master_df')
 
-    if (chart_type == 'OHLC'):
+    if (dashboard_viz_type == 'OHLC'):
         # Plot OHLC on 1st row
         fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'],
                                      low=df['Low'], close=df['Close'], name="OHLC"), row=1, col=1)
-    elif (chart_type == 'Close'):
+    elif (dashboard_viz_type == 'Close'):
         # Plot Close on 1st row
 
         fig.add_trace(go.Scatter(
@@ -315,7 +314,6 @@ def view_dashboard(database_name):
             name = 'Buy'
         )
     )
-
 
     fig.update_layout(
         xaxis=dict(
@@ -492,18 +490,29 @@ def view_sidebar_settings():
     st.sidebar.header('Visualize Results')
 
     dir = os.path.join(os.path.abspath(os.curdir), 'export/database')
-
     database_name = None
-
     backtest_list = [f for f in listdir(dir) if isfile(join(dir, f)) and f.startswith("btdb")]
     database_name = st.sidebar.selectbox('Available Backtests', backtest_list, key="<hjgjhg>")
+
+    dashboard_types = ['OHLC', 'Close']
+    dashboard_type = st.sidebar.selectbox('Select Dashboard Type', dashboard_types, key="<dashboard_types>")
+    equity_types = ['absolute', 'percentage %', 'log10 absolute', 'log10 percentage %'] 
+    equity_type = st.sidebar.selectbox('Select Equity Type', equity_types, key="<equity_types>")
+
+    
+
+    viz_settings = {
+        'dashboard_type' : dashboard_type,
+        'equity_type' : equity_type,
+        'database_name' : database_name
+     }
     
     show_bool = st.sidebar.button('Show')
     export_bool = st.sidebar.button('Export')
 
     if show_bool:
 
-        return [True, database_name]
+        return True, viz_settings
     
     elif export_bool:
 
@@ -512,4 +521,4 @@ def view_sidebar_settings():
         st.header('Backtest Export finished')
         st.balloons()
 
-    return [False, database_name]
+    return False, viz_settings

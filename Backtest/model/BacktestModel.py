@@ -4,7 +4,6 @@ import yfinance as yf
 import sqlite3
 import shutil
 
-from data_prep.CSVDataPreparer import *
 from equity.Equity import *
 from statistics.spreadsheet import *
 from tools.toolbox import *
@@ -123,7 +122,7 @@ class BacktestModel(object):
 
         # Move Database File
         source = os.path.join(os.path.abspath(os.curdir), self.__database_name)
-        destination = os.path.join(os.path.abspath(os.curdir), 'export/database')
+        destination = os.path.join(os.path.abspath(os.curdir), 'export/database/')
 
         shutil.move(source, destination)
 
