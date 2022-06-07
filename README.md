@@ -25,8 +25,6 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
  
  The PyStockSim GUI uses the streamlit library. To start the GUI you need to run the following commands.
  
- <details><summary><b>Show instructions</b></summary>
- 
  1. Start environment:
 
     ```sh
@@ -38,8 +36,6 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
     ```sh
     % streamlit run Backtest/main.py
     ```
- 
-</details>
  
  ### Create a Backtest
  On the sidebar you set all the necessary parameters to run the backtest for your trading system.
