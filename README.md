@@ -8,6 +8,7 @@ PyStockSim is a environment where you can backtest your trading systems. It prov
 * SpreadSheet
 
  The GUI consists of the sidebar (left) and the main overview (right).
+ 
  ![](img/vid_overview.gif)
  
  ## Usage
